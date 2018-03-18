@@ -1,0 +1,332 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Management.Automation;
+using System.Data;
+using System.Data.Common;
+
+namespace Horker.Data
+{
+    /// <summary>
+    /// <para type="synopsis">Inserts objects into a database table.</para>
+    /// <para type="description">The Export-DataTable cmdlet inserts objects from the pipeline into a database table specified by the -TableName parameter.</para>
+    /// <para type="description">The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.</para>
+    /// <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as string type. This does not matter because most database engines allow to apply arithmetic operations to string columns. If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet before exporting.</para>
+    /// </summary>
+    [Cmdlet("Export", "DataTable")]
+    public class ExportDataTable : PSCmdlet
+    {
+        /// <summary>
+        /// <para type="description">Objects to be inserted into a database table.</para>
+        /// </summary>
+        [Parameter(ValueFromPipeline = true)]
+        public object InputObject { get; set; }
+
+        /// <summary>
+        /// <para type="description">A database file name or a connection string name.</para>
+        /// </summary>
+        [Parameter(Position = 0, ParameterSetName = "FileOrName", Mandatory = true)]
+        public string FileOrName { get; set; }
+
+        /// <summary>
+        /// <para type="description">A database connection.</para>
+        /// </summary>
+        [Parameter(Position = 0, ParameterSetName = "Connection", Mandatory = true)]
+        public DbConnection Connection { get; set; }
+
+        /// <summary>
+        /// <para type="description">A table name into which objects will be inserted.</para>
+        /// </summary>
+        [Parameter(Position = 1, Mandatory = true)]
+        public string TableName { get; set; }
+
+        /// <summary>
+        /// <para type="description">Additional column names.</para>
+        /// </summary>
+        [Parameter(Position = 2, Mandatory = false)]
+        public string[] AdditionalColumns { get; set; }
+
+        /// <summary>
+        /// <para type="description">A type of columns of a newly created table. By default, it is one of 'varchar' (general databases), 'nvarchar' (SQL Server), 'varchar2' (Oracle), or an empty string (SQLite).</para>
+        /// </summary>
+        [Parameter(Position = 3, Mandatory = false)]
+        public string TypeName { get; set; }
+
+        private DbConnection _connection;
+        private bool _connectionOpen;
+        private DbProviderFactory _factory;
+        private DbCommandBuilder _builder;
+
+        private HashSet<string> _fieldSet;
+        private string _insertStmt;
+
+        private DbTransaction _transaction;
+
+        protected override void BeginProcessing()
+        {
+            base.BeginProcessing();
+
+            var opener = new ConnectionOpener(FileOrName, Connection, null, null);
+            _connection = opener.Connection;
+            _connectionOpen = opener.ConnectionOpen;
+
+            try {
+                if (_connection == null) {
+                    WriteError(new ErrorRecord(new RuntimeException("Can't open a connection"), "", ErrorCategory.NotSpecified, null));
+                    throw new PipelineStoppedException();
+                }
+
+                // ODBC and OLEDB Access connections fail to obtain the corresponding factories.
+                if (_connection is System.Data.Odbc.OdbcConnection) {
+                    _factory = DbProviderFactories.GetFactory("System.Data.Odbc");
+                }
+                else if (_connection is System.Data.OleDb.OleDbConnection) {
+                    _factory = DbProviderFactories.GetFactory("System.Data.OleDb");
+                }
+                else {
+                    _factory = DbProviderFactories.GetFactory(_connection);
+                }
+
+                if (_factory == null) {
+                    WriteError(new ErrorRecord(new RuntimeException("Failed to obtain a DbProviderFactory object"), "", ErrorCategory.NotSpecified, null));
+                    throw new PipelineStoppedException();
+                }
+
+                _builder = _factory.CreateCommandBuilder();
+
+                // Supply a command builder with an adaptor object because some providers' builders
+                // (including those of ODBC and OLEDB Access) require an active connection to make QuoteIndentifier() work.
+                var adaptor = _factory.CreateDataAdapter();
+                var cmd = _connection.CreateCommand();
+                cmd.CommandText = "select 1";
+                adaptor.SelectCommand = cmd;
+                _builder.DataAdapter = adaptor;
+
+                _insertStmt = "insert into " + _builder.QuoteIdentifier(TableName) + " (";
+            }
+            catch (Exception ex) {
+                if (_connectionOpen) {
+                    _connection.Close();
+                }
+                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+                throw new PipelineStoppedException();
+            }
+        }
+
+        protected override void ProcessRecord()
+        {
+            try {
+                base.ProcessRecord();
+
+                if (_fieldSet == null) {
+                    CreateTable();
+
+                    _transaction = _connection.BeginTransaction();
+                }
+
+                var cmd = _connection.CreateCommand();
+                cmd.CommandText = _insertStmt;
+                cmd.Transaction = _transaction;
+
+                var buffer = new StringBuilder(_insertStmt);
+
+                var count = 0;
+                if (InputObject is PSObject) {
+                    var obj = (PSObject)InputObject;
+                    foreach (var p in obj.Properties) {
+                        if (!p.IsGettable || !p.IsInstance) {
+                            continue;
+                        }
+                        if (_fieldSet.Contains(p.Name)) {
+                            if (count > 0) {
+                                buffer.Append(",");
+                            }
+                            ++count;
+                            buffer.Append(_builder.QuoteIdentifier(p.Name));
+                            var param = cmd.CreateParameter();
+                            param.Value = p.Value;
+                            cmd.Parameters.Add(param);
+                        }
+                    }
+                }
+                else {
+                    foreach (var p in InputObject.GetType().GetProperties()) {
+                        if (!p.CanRead) {
+                            continue;
+                        }
+                        if (_fieldSet.Contains(p.Name)) {
+                            if (count > 0) {
+                                buffer.Append(",");
+                            }
+                            ++count;
+                            buffer.Append(_builder.QuoteIdentifier(p.Name));
+                            var param = cmd.CreateParameter();
+                            param.Value = p.GetValue(InputObject);
+                            cmd.Parameters.Add(param);
+                        }
+                    }
+                }
+                buffer.Append(") values (?");
+                for (var i = 0; i < count - 1; ++i) {
+                    buffer.Append(",?");
+                }
+                buffer.Append(")");
+                var stmt = buffer.ToString();
+                WriteVerbose(stmt);
+
+                cmd.CommandText = stmt;
+
+                var rowsAffected = cmd.ExecuteNonQuery();
+                if (rowsAffected != 1) {
+                    throw new RuntimeException("Insertion failed");
+                }
+            }
+            catch (Exception ex) {
+                if (_transaction != null) {
+                    _transaction.Rollback();
+                }
+                if (_connectionOpen) {
+                    _connection.Close();
+                }
+                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+                throw new PipelineStoppedException();
+            }
+        }
+
+        protected override void EndProcessing()
+        {
+            try {
+                base.EndProcessing();
+
+                _transaction.Commit();
+            }
+            catch (Exception ex) {
+                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+                throw new PipelineStoppedException();
+            }
+            finally {
+                if (_connectionOpen) {
+                    _connection.Close();
+                }
+            }
+        }
+
+        protected override void StopProcessing()
+        {
+            base.StopProcessing();
+
+            if (_connectionOpen && _connection.State == ConnectionState.Open) {
+                _connection.Close();
+            }
+        }
+
+        private void CreateTable()
+        {
+            string stmt;
+            DbCommand cmd;
+
+            // Try to select from a table given by TableName in order to find whether such a table exists.
+
+            bool tableExists = false;
+            try {
+                stmt = "select * from " + _builder.QuoteIdentifier(TableName);
+                WriteVerbose(stmt);
+
+                cmd = _connection.CreateCommand();
+                cmd.CommandText = stmt;
+
+                var adaptor = _factory.CreateDataAdapter();
+                adaptor.SelectCommand = cmd;
+
+                var dataSet = new DataSet();
+                adaptor.FillSchema(dataSet, SchemaType.Mapped);
+
+                var table = dataSet.Tables[0];
+
+                _fieldSet = new HashSet<string>();
+                foreach (DataColumn c in table.Columns) {
+                    _fieldSet.Add(c.ColumnName);
+                }
+
+                tableExists = true;
+            }
+            catch (DbException) {
+                // Ignore an exception
+            }
+
+            if (tableExists) {
+                return;
+            }
+
+            // Collect field names from the input object
+
+            var fields = new List<string>();
+            if (InputObject is PSObject) {
+                var obj = (PSObject)InputObject;
+                foreach (var p in obj.Properties) {
+                    fields.Add(p.Name);
+                }
+            }
+            else {
+                foreach (var p in InputObject.GetType().GetProperties()) {
+                    if (!p.CanRead) {
+                        continue;
+                    }
+                    fields.Add(p.Name);
+                }
+            }
+
+            if (AdditionalColumns != null) {
+                foreach (var c in AdditionalColumns) {
+                    fields.Add(c);
+                }
+            }
+
+            _fieldSet = new HashSet<string>(fields);
+
+            // Create a table
+
+            string stringType = "varchar"; // ANSI SQL standard
+
+            if (TypeName != null) {
+                stringType = TypeName;
+            }
+            else if (_connection is System.Data.SQLite.SQLiteConnection) {
+                // SQLite can omit a type
+                stringType = "";
+            }
+            else if (_connection is System.Data.SqlClient.SqlConnection) {
+                // SQL Server supports nvarchar, which represents a UTF-16 string
+                // and is safe for any database encoding
+                stringType = "nvarchar";
+            }
+            else if (_connection.GetType().FullName.Contains("Oracle")) {
+                // Conventional type name of string for Oracle
+                stringType = "nvarchar2";
+            }
+
+            var templ = new StringBuilder();
+            templ.Append("create table ");
+            templ.Append(_builder.QuoteIdentifier(TableName));
+            templ.Append(" (\r\n");
+            bool first = true;
+            foreach (var f in fields) {
+                if (!first) {
+                    templ.AppendLine(",");
+                }
+                first = false;
+                templ.Append("    ");
+                templ.Append(_builder.QuoteIdentifier(f));
+                templ.Append(" {0}");
+            }
+            templ.AppendLine("\r\n)");
+
+            stmt = String.Format(templ.ToString(), stringType);
+            WriteVerbose(stmt);
+
+            cmd = _connection.CreateCommand();
+            cmd.CommandText = stmt;
+            cmd.ExecuteNonQuery();
+        }
+    }
+}

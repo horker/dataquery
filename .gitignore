@@ -1,0 +1,13 @@
+HorkerDataQuery/
+
+.vs/
+bin/
+obj/
+packages/
+*.user
+
+private/
+vendor/
+
+*.sqlite
+*.accdb
