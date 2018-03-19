@@ -12,7 +12,7 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0'
+ModuleVersion = '1.0.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = ''
@@ -149,6 +149,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
+v1.0.1
+Bug fix: Added a missing file in the 32-bit environment
+
 v1.0.0
 First release
 "@

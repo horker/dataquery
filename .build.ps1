@@ -2,6 +2,21 @@ task . Build, BuildHelp, ImportLocally
 
 Set-StrictMode -Version 4
 
+# a bug-fixed version to handle errors correctly
+function Copy-ItemBugFixed {
+  param(
+    [string]$Source,
+    [string]$Dest
+  )
+
+  try {
+    Copy-Item $Source $Dest
+  }
+  catch {
+    Write-Error $_
+  }
+}
+
 $ModulePath = "$PSScriptRoot\HorkerDataQuery"
 
 task Build {
@@ -9,16 +24,20 @@ task Build {
   if (!(Test-Path $ModulePath)) {
     $void = mkdir $ModulePath
   }
-
-  try {
-    Copy-Item "$PSScriptRoot\scripts\*" $ModulePath
-    Copy-Item "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll" $ModulePath
-    Copy-Item "$PSScriptRoot\cs\dataquery\bin\Release\System.Data.SQLite.dll" $ModulePath
-    Copy-Item "$PSScriptRoot\cs\dataquery\bin\Release\x64" $ModulePath
-    Copy-Item "$PSScriptRoot\cs\dataquery\bin\Release\x86" $ModulePath
+  if (!(Test-Path "$ModulePath\x64")) {
+    $void = mkdir "$ModulePath\x64"
   }
-  catch {
-    # Ignore
+  if (!(Test-Path "$ModulePath\x86")) {
+    $void = mkdir "$ModulePath\x86"
+  }
+
+  . {
+    $ErrorActionPreference = "Continue"
+    Copy-ItemBugFixed "$PSScriptRoot\scripts\*" $ModulePath
+    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll" $ModulePath
+    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\System.Data.SQLite.dll" $ModulePath
+    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\x64\*" "$ModulePath\x64"
+    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\x86\*" "$ModulePath\x86"
   }
 }
 
