@@ -67,8 +67,6 @@ PS> idq localsql "select * from Production.Product"
 
 You may want to put the definition of the connection string of your database in your `profile.ps1`.
 
-When you would like to make your own connection string, the `New-DataConnectionString` cmdlet will help.
-
 Another way to define a connection string is loading `app.config` or `web.config`. If you are developing a database application, you have already had such a file.
 
 To load a configuration file, use the `Register-DataConfiguration` cmdlet. This cmdlet will read the file, find the `<configuration><connectionStrings>` and `<configuration><system.data><DbProviderFactories>` sections, and define connection strings (and database provider factories if the latter section exists) according to its contents. The cmdlet will safely ignore the other sections in the file.
@@ -79,7 +77,7 @@ PS> Register-DataConfiguration <your_app_folder>/app.config
 
 ### Exporting Objects to Database Tables
 
-The `Export-DataTable` cmdlet inserts PowerShell objects into a database table. The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.
+The `Export-DataTable` cmdlet inserts PowerShell objects into a database table. The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, properties are ignored.
 
 If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. See the following example:
 
@@ -123,7 +121,7 @@ PS>
 
 (The result depends on the environment.)
 
-In the current version, all columns defined by `Export-DataTable` are of the string type. If you want to specify column types, you can define your own table with the `CREATE TABLE` statement before export.
+In the current version, all columns defined by `Export-DataTable` are of the string type. If you want to specify column types, define your own table with the `CREATE TABLE` statement before export.
 
 ### In-memory Database
 
@@ -158,13 +156,13 @@ PS> Close-DataConnection $mem
 
 ### File-based Databases
 
-The module gives special treatment to SQLite and Microsoft Access as file-based databases. It means that you specify a file name directly as the first parameters of several cmdlets, including `Invoke-DataQuery` or `New-DataConnection`, instead of a connection string name.
+The module gives special treatment to SQLite and Microsoft Access as file-based databases. It means that you specify a file name directly as the first parameter of several cmdlets, including `Invoke-DataQuery` or `New-DataConnection`, instead of a connection string name.
 
-Note that if you want to use the Microsoft Access provider, Access should have been installed on your machine. Furthermore, because Microsoft provides the only 32-bit version of the Access provider, you should activate the 32-bit version of PowerShell to make the provider effective. Select "Windows PowerShell (x86)" in the Start Menu.
+Note that if you want to use the Microsoft Access provider, Microsoft Access should have been installed on your machine. Furthermore, Microsoft provides the only 32-bit version of the Access provider, so that you should activate the 32-bit version of PowerShell to make the provider effective. Select "Windows PowerShell (x86)" in the Start Menu.
 
 ### Database schemas
 
-The module can obtain database schema information, such as tables contained in the database. The cmdlet you can use is `Get-DataSchema`. If you execute the cmdlet without the `-CollectionName` parameter, it shows a list of available kinds of schema information:
+The module can obtain database schema information, such as tables contained in the database, by using the `Get-DataSchema` cmdlet. If you execute this cmdlet without the `CollectionName` parameter, it shows a list of available kinds of schema information:
 
 ```PowerShell
 PS> Get-DataSchema test.db
@@ -205,12 +203,11 @@ main          sqlite_default_schema WindowsDir Length                           
 PS>
 ```
 
-Information that the cmdlet obtains is provider-specific.
+Kinds of information that the cmdlet can obtain are provider-specific.
 
 ## Cmdlets
 
 The module provides the following cmdlets. Help topics are available for all cmdlets; Try `help` if you want to know about one of these.
-
 
 - Data query
     - `Invoke-DataQuery`: Executes a database query.
