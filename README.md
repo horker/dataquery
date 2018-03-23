@@ -20,9 +20,9 @@ Install-Module HorkerDataQuery
 
 ## Quick Walkthrough
 
-### Getting Started by Using SQLite
+### Getting Started with SQLite
 
-The module provides the built-in SQLite driver so that you can use SQLite databases out of the box.
+The module is shipped with the built-in SQLite provider so that you can use SQLite databases out of the box.
 
 If you have no SQLite database files, create a new one:
 
@@ -57,7 +57,7 @@ PS> Register-DataConnectionString `
   -ConnectionString "Data Source=localhost;Initial Catalog=AdventureWorks2014;Integrated Security=True"
 ```
 
-The `Name` parameter is a name for this connection string. The `ProviderName` parameter specifies a database provider, such as `System.Data.SqlClient` for SQL Server, `System.Data.OracleClient` for Oracle, and `MySql.Data.MySqlClient` for MySQL. You can find a provider name by the `Get-DbProviderFactory` cmdlet;  The `InvariantName` property is what you want. The `ConnectionString` parameter is a connection string, which is different depending on database providers. See the documentation for your database.
+The `Name` parameter is a name for this connection string. The `ProviderName` parameter specifies a database provider, such as `System.Data.SqlClient` for SQL Server, `System.Data.OracleClient` for Oracle, and `MySql.Data.MySqlClient` for MySQL. You can find a provider name by the `Get-DbProviderFactory` cmdlet;  The `InvariantName` property is what you want. The `ConnectionString` parameter is a connection string, which differs depending on database providers. See the documentation for your database.
 
 After the registration, you can give a connection string name, such as `localsql` in the above example, to the first parameter of `Invoke-DataQuery`:
 
@@ -65,9 +65,9 @@ After the registration, you can give a connection string name, such as `localsql
 PS> idq localsql "select * from Production.Product"
 ```
 
-You may want to put the definition of the connection string of your database in your `profile.ps1`.
+You may want to put the connection string definition of your database in your `profile.ps1`.
 
-Another way to define a connection string is loading `app.config` or `web.config`. If you are developing a database application, you have already had such a file.
+Another way to define a connection string is loading `app.config` or `web.config`. If you are developing a database application, you would have already had such a file.
 
 To load a configuration file, use the `Register-DataConfiguration` cmdlet. This cmdlet will read the file, find the `<configuration><connectionStrings>` and `<configuration><system.data><DbProviderFactories>` sections, and define connection strings (and database provider factories if the latter section exists) according to its contents. The cmdlet will safely ignore the other sections in the file.
 
@@ -77,7 +77,7 @@ PS> Register-DataConfiguration <your_app_folder>/app.config
 
 ### Exporting Objects to Database Tables
 
-The `Export-DataTable` cmdlet inserts PowerShell objects into a database table. The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, properties are ignored.
+The `Export-DataTable` cmdlet inserts PowerShell objects into a database table. The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.
 
 If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. See the following example:
 
@@ -121,13 +121,13 @@ PS>
 
 (The result depends on the environment.)
 
-In the current version, all columns defined by `Export-DataTable` are of the string type. If you want to specify column types, define your own table with the `CREATE TABLE` statement before export.
+In the current version, all columns defined by `Export-DataTable` are of the string type. If you want to specify columns and types, create your own table with the `CREATE TABLE` statement before export.
 
 ### In-memory Database
 
 The connection string `memory` is predefined to access an SQLite in-memory database.
 
-To use an in-memory database, you need to open a connection with the `New-DataConnection` cmdlet (It would be a good idea to put this command in your `profile.ps1`):
+To use an in-memory database, you need to open a connection with the `New-DataConnection` cmdlet:
 
 ```PowerShell
 PS> $mem = New-DataConnection memory
@@ -162,7 +162,7 @@ Note that if you want to use the Microsoft Access provider, Microsoft Access sho
 
 ### Database schemas
 
-The module can obtain database schema information, such as tables contained in the database, by using the `Get-DataSchema` cmdlet. If you execute this cmdlet without the `CollectionName` parameter, it shows a list of available kinds of schema information:
+You can obtain database schema information by using the `Get-DataSchema` cmdlet. If you execute this cmdlet without the `CollectionName` parameter, it shows a list of available kinds of schema information:
 
 ```PowerShell
 PS> Get-DataSchema test.db
@@ -203,11 +203,11 @@ main          sqlite_default_schema WindowsDir Length                           
 PS>
 ```
 
-Kinds of information that the cmdlet can obtain are provider-specific.
+Information that the cmdlet will return varies depending on the database provider.
 
 ## Cmdlets
 
-The module provides the following cmdlets. Help topics are available for all cmdlets; Try `help` if you want to know about one of these.
+The module provides the following cmdlets. Help topics are available for all cmdlets; Try `help` for detailed information.
 
 - Data query
     - `Invoke-DataQuery`: Executes a database query.
