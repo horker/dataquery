@@ -2,6 +2,8 @@
 using System.Xml;
 using System.Management.Automation;
 
+#pragma warning disable CS1591
+
 namespace Horker.Data
 {
     /// <summary>

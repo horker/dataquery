@@ -5,6 +5,8 @@ using System.Management.Automation;
 using System.Data;
 using System.Data.Common;
 
+#pragma warning disable CS1591
+
 namespace Horker.Data
 {
     /// <summary>

@@ -4,6 +4,8 @@ using System.Management.Automation;
 using System.Data.Common;
 using System.Configuration;
 
+#pragma warning disable CS1591
+
 namespace Horker.Data
 {
     public abstract class ConnectionSetting

@@ -4,6 +4,8 @@ using System.Data;
 using System.Data.Common;
 using System.Configuration;
 
+#pragma warning disable CS1591
+
 namespace Horker.Data
 {
     /// <summary>
