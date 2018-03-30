@@ -1,4 +1,5 @@
 HorkerDataQuery/
+debug/
 
 .vs/
 bin/
@@ -11,3 +12,4 @@ vendor/
 
 *.sqlite
 *.accdb
+*.db

@@ -1,9 +1,9 @@
-task . Build, BuildHelp, ImportLocally
+task . Build, BuildHelp, ImportDebug
 
 Set-StrictMode -Version 4
 
 # a bug-fixed version to handle errors correctly
-function Copy-ItemBugFixed {
+function Copy-ItemError {
   param(
     [string]$Source,
     [string]$Dest
@@ -18,26 +18,33 @@ function Copy-ItemBugFixed {
 }
 
 $ModulePath = "$PSScriptRoot\HorkerDataQuery"
+$DebugModulePath = "$PSScriptRoot\debug\HorkerDataQuery"
 
 task Build {
 
-  if (!(Test-Path $ModulePath)) {
-    $void = mkdir $ModulePath
-  }
-  if (!(Test-Path "$ModulePath\x64")) {
-    $void = mkdir "$ModulePath\x64"
-  }
-  if (!(Test-Path "$ModulePath\x86")) {
-    $void = mkdir "$ModulePath\x86"
-  }
-
   . {
     $ErrorActionPreference = "Continue"
-    Copy-ItemBugFixed "$PSScriptRoot\scripts\*" $ModulePath
-    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll" $ModulePath
-    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\System.Data.SQLite.dll" $ModulePath
-    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\x64\*" "$ModulePath\x64"
-    Copy-ItemBugFixed "$PSScriptRoot\cs\dataquery\bin\Release\x86\*" "$ModulePath\x86"
+
+    $void = mkdir $ModulePath
+    $void = mkdir "$ModulePath\x64"
+    $void = mkdir "$ModulePath\x86"
+
+    Copy-ItemError "$PSScriptRoot\scripts\*" $ModulePath
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll" $ModulePath
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Release\System.Data.SQLite.dll" $ModulePath
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Release\x64\*" "$ModulePath\x64"
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Release\x86\*" "$ModulePath\x86"
+
+    $void = mkdir "debug"
+    $void = mkdir $DebugModulePath
+    $void = mkdir "$DebugModulePath\x64"
+    $void = mkdir "$DebugModulePath\x86"
+
+    Copy-ItemError "$PSScriptRoot\scripts\*" $DebugModulePath
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Debug\Horker.Data.dll" $DebugModulePath
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Debug\System.Data.SQLite.dll" $DebugModulePath
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Debug\x64\*" "$DebugModulePath\x64"
+    Copy-ItemError "$PSScriptRoot\cs\dataquery\bin\Debug\x86\*" "$DebugModulePath\x86"
   }
 }
 
@@ -54,8 +61,8 @@ task BuildHelp `
   Copy-Item $HELP_INTERM $ModulePath
 }
 
-task ImportLocally {
-  Import-Module .\HorkerDataQuery -Force
+task ImportDebug {
+  Import-Module .\debug\HorkerDataQuery -Force
 }
 
 task Clean {
