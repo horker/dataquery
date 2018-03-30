@@ -12,7 +12,7 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.1'
+ModuleVersion = '1.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = ''
@@ -34,13 +34,13 @@ Description = "Horker DataQuery is a database query utility based on ADO.NET.
 
 The main features are:
 - Written in C#, so that it works fast for large data
-- Supports every database product that provides the ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB and ODBC.
+- Supports every database product that provides the ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB, and ODBC
 - Returns query results as PowerShell objects, and exports PowerShell objects into database tables
-- Enables to read app.config` or web.config` to set up database provider definitions and connection strings
-- Enables to get information from the database schema
+- Reads app.config` or web.config` to define database providers and connection strings
+- Gets information from the database schema
 - Provides the built-in SQLite driver
 
-This module would be helpful for debugging applications, data analysis, and daily data manipulation tasks.
+This module would be helpful for software development, data analysis, and various data manipulation tasks.
 
 For more details, see the project site: https://github.com/horker/dataquery"
 
@@ -149,6 +149,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
+v1.0.2
+Several bug fixes
+
 v1.0.1
 Bug fix: Added a missing file in the 32-bit environment
 
