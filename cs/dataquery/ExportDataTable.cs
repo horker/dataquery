@@ -198,6 +198,12 @@ namespace Horker.Data
                         }
                     }
                 }
+
+                // If there are no columns to be inserted, just skip.
+                if (placeholders.Length == 0) {
+                    return;
+                }
+
                 buffer.Append(") values (");
                 buffer.Append(placeholders);
                 buffer.Append(')');
