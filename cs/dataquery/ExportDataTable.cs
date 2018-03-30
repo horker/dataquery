@@ -60,6 +60,8 @@ namespace Horker.Data
         private HashSet<string> _fieldSet;
         private string _insertStmt;
 
+        private bool _useNamedParameters;
+
         private DbTransaction _transaction;
 
         protected override void BeginProcessing()
@@ -103,6 +105,8 @@ namespace Horker.Data
                 _builder.DataAdapter = adaptor;
 
                 _insertStmt = "insert into " + _builder.QuoteIdentifier(TableName) + " (";
+
+                _useNamedParameters = false;
             }
             catch (Exception ex) {
                 if (_connectionOpen) {
@@ -118,9 +122,13 @@ namespace Horker.Data
             try {
                 base.ProcessRecord();
 
+                if (InputObject == null) {
+                    return;
+                }
+
                 if (_fieldSet == null) {
                     CreateTable();
-
+                    _useNamedParameters = TestNamedParameterSupport();
                     _transaction = _connection.BeginTransaction();
                 }
 
@@ -129,7 +137,9 @@ namespace Horker.Data
                 cmd.Transaction = _transaction;
 
                 var buffer = new StringBuilder(_insertStmt);
+                var placeholders = new StringBuilder();
 
+                string pa = "?";
                 var count = 0;
                 if (InputObject is PSObject) {
                     var obj = (PSObject)InputObject;
@@ -139,13 +149,23 @@ namespace Horker.Data
                         }
                         if (_fieldSet.Contains(p.Name)) {
                             if (count > 0) {
-                                buffer.Append(",");
+                                buffer.Append(',');
+                                placeholders.Append(',');
                             }
                             ++count;
-                            buffer.Append(_builder.QuoteIdentifier(p.Name));
+
+                            var qualified = _builder.QuoteIdentifier(p.Name);
+                            buffer.Append(qualified);
+
                             var param = cmd.CreateParameter();
+                            if (_useNamedParameters) {
+                                pa = "@" + count.ToString();
+                                param.ParameterName = pa;
+                            }
                             param.Value = p.Value;
                             cmd.Parameters.Add(param);
+
+                            placeholders.Append(pa);
                         }
                     }
                 }
@@ -156,21 +176,29 @@ namespace Horker.Data
                         }
                         if (_fieldSet.Contains(p.Name)) {
                             if (count > 0) {
-                                buffer.Append(",");
+                                buffer.Append(',');
+                                placeholders.Append(',');
                             }
                             ++count;
-                            buffer.Append(_builder.QuoteIdentifier(p.Name));
+
+                            var qualified = _builder.QuoteIdentifier(p.Name);
+                            buffer.Append(qualified);
+
                             var param = cmd.CreateParameter();
+                            if (_useNamedParameters) {
+                                pa = "@" + count.ToString();
+                                param.ParameterName = pa;
+                            }
                             param.Value = p.GetValue(InputObject);
                             cmd.Parameters.Add(param);
+
+                            placeholders.Append(pa);
                         }
                     }
                 }
-                buffer.Append(") values (?");
-                for (var i = 0; i < count - 1; ++i) {
-                    buffer.Append(",?");
-                }
-                buffer.Append(")");
+                buffer.Append(") values (");
+                buffer.Append(placeholders);
+                buffer.Append(')');
                 var stmt = buffer.ToString();
                 WriteVerbose(stmt);
 
@@ -198,7 +226,9 @@ namespace Horker.Data
             try {
                 base.EndProcessing();
 
-                _transaction.Commit();
+                if (_transaction != null) {
+                    _transaction.Commit();
+                }
             }
             catch (Exception ex) {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
@@ -327,6 +357,31 @@ namespace Horker.Data
             cmd = _connection.CreateCommand();
             cmd.CommandText = stmt;
             cmd.ExecuteNonQuery();
+        }
+
+        private bool TestNamedParameterSupport()
+        {
+            try {
+                var cmd = _connection.CreateCommand();
+                var stmt = "select 1 = @param";
+                cmd.CommandText = stmt;
+                WriteVerbose(stmt);
+
+                var param = cmd.CreateParameter();
+                param.ParameterName = "@param";
+                param.Value = 1;
+
+                cmd.Parameters.Add(param);
+
+                var reader = cmd.ExecuteReader();
+                reader.Read();
+                reader.GetValue(0);
+
+                return true;
+            }
+            catch (DbException) {
+                return false;
+            }
         }
     }
 }
