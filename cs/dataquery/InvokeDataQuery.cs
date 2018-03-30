@@ -37,7 +37,7 @@ namespace Horker.Data
         /// <para type="description">Query parameters.</para>
         /// </summary>
         [Parameter(Position = 2, Mandatory = false)]
-        public System.Collections.Hashtable Parameters { get; set; }
+        public ICollection Parameters { get; set; }
 
         /// <summary>
         /// <para type="description">A query timeout in seconds.</para>
@@ -80,11 +80,20 @@ namespace Horker.Data
                 }
 
                 if (Parameters != null) {
-                    foreach (DictionaryEntry entry in Parameters) {
-                        var param = cmd.CreateParameter();
-                        param.ParameterName = (string)entry.Key;
-                        param.Value = entry.Value;
-                        cmd.Parameters.Add(param);
+                    if (Parameters is IDictionary) {
+                        foreach (DictionaryEntry entry in Parameters as IDictionary) {
+                            var param = cmd.CreateParameter();
+                            param.ParameterName = (string)entry.Key;
+                            param.Value = entry.Value;
+                            cmd.Parameters.Add(param);
+                        }
+                    }
+                    else {
+                        foreach (var value in Parameters) {
+                            var param = cmd.CreateParameter();
+                            param.Value = value;
+                            cmd.Parameters.Add(param);
+                        }
                     }
                 }
 
