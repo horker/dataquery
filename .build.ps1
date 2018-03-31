@@ -4,7 +4,7 @@ Set-StrictMode -Version 4
 
 ############################################################
 
-$SourcePath = "$PSScriptRoot\cs\dataquery"
+$SourcePath = "$PSScriptRoot\source"
 $ModulePath = "$PSScriptRoot\HorkerDataQuery"
 $DebugModulePath = "$PSScriptRoot\debug\HorkerDataQuery"
 
@@ -54,10 +54,10 @@ task Build {
     New-FolderSkip "$ModulePath\x86"
 
     Copy-ItemSkip "$PSScriptRoot\scripts\*" $ModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll" $ModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Release\System.Data.SQLite.dll" $ModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Release\x64\*" "$ModulePath\x64"
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Release\x86\*" "$ModulePath\x86"
+    Copy-ItemSkip "$SourcePath\bin\Release\Horker.Data.dll" $ModulePath
+    Copy-ItemSkip "$SourcePath\bin\Release\System.Data.SQLite.dll" $ModulePath
+    Copy-ItemSkip "$SourcePath\bin\Release\x64\*" "$ModulePath\x64"
+    Copy-ItemSkip "$SourcePath\bin\Release\x86\*" "$ModulePath\x86"
 
     New-FolderSkip "debug"
     New-FolderSkip $DebugModulePath
@@ -65,16 +65,16 @@ task Build {
     New-FolderSkip "$DebugModulePath\x86"
 
     Copy-ItemSkip "$PSScriptRoot\scripts\*" $DebugModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\Horker.Data.dll" $DebugModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\Horker.Data.pdb" $DebugModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\System.Data.SQLite.dll" $DebugModulePath
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\x64\*" "$DebugModulePath\x64"
-    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\x86\*" "$DebugModulePath\x86"
+    Copy-ItemSkip "$SourcePath\bin\Debug\Horker.Data.dll" $DebugModulePath
+    Copy-ItemSkip "$SourcePath\bin\Debug\Horker.Data.pdb" $DebugModulePath
+    Copy-ItemSkip "$SourcePath\bin\Debug\System.Data.SQLite.dll" $DebugModulePath
+    Copy-ItemSkip "$SourcePath\bin\Debug\x64\*" "$DebugModulePath\x64"
+    Copy-ItemSkip "$SourcePath\bin\Debug\x86\*" "$DebugModulePath\x86"
   }
 }
 
-$HELP_INPUT = "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll"
-$HELP_INTERM = "$PSScriptRoot\cs\dataquery\bin\Release\Horker.Data.dll-Help.xml"
+$HELP_INPUT =  "$SourcePath\bin\Release\Horker.Data.dll"
+$HELP_INTERM = "$SourcePath\bin\Release\Horker.Data.dll-Help.xml"
 $HELP_OUTPUT = "$ModulePath\Horker.Data.dll-Help.xml"
 
 task BuildHelp `
