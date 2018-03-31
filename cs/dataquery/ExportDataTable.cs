@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Management.Automation;
 using System.Data;
 using System.Data.Common;
@@ -37,7 +38,7 @@ namespace Horker.Data
         public DbConnection Connection { get; set; }
 
         /// <summary>
-        /// <para type="description">A table name into which objects will be inserted.</para>
+        /// <para type="description">A table name into which objects will be inserted. The value is not quoted and embeded into SQL statements that the cmdlet generates internally.</para>
         /// </summary>
         [Parameter(Position = 1, Mandatory = true)]
         public string TableName { get; set; }
@@ -58,6 +59,8 @@ namespace Horker.Data
         private bool _connectionOpen;
         private DbProviderFactory _factory;
         private DbCommandBuilder _builder;
+
+        private string _qualifiedTableName;
 
         private HashSet<string> _fieldSet;
         private string _insertStmt;
@@ -106,8 +109,6 @@ namespace Horker.Data
                 adaptor.SelectCommand = cmd;
                 _builder.DataAdapter = adaptor;
 
-                _insertStmt = "insert into " + _builder.QuoteIdentifier(TableName) + " (";
-
                 _useNamedParameters = false;
             }
             catch (Exception ex) {
@@ -129,8 +130,14 @@ namespace Horker.Data
                 }
 
                 if (_fieldSet == null) {
+                    _qualifiedTableName = GetQualifiedTableName();
+
                     CreateTable();
+
                     _useNamedParameters = TestNamedParameterSupport();
+
+                    _insertStmt = "insert into " + _qualifiedTableName + " (";
+
                     _transaction = _connection.BeginTransaction();
                 }
 
@@ -258,6 +265,12 @@ namespace Horker.Data
             }
         }
 
+        private string GetQualifiedTableName()
+        {
+            // Do nothing. Because TableName is a paramater, users can quote it appropriately.
+            return TableName;
+        }
+
         private void CreateTable()
         {
             string stmt;
@@ -266,7 +279,7 @@ namespace Horker.Data
 
             bool tableExists = false;
             try {
-                stmt = "select * from " + _builder.QuoteIdentifier(TableName);
+                stmt = "select * from " + _qualifiedTableName;
                 WriteVerbose(stmt);
 
                 using (var cmd = _connection.CreateCommand())
@@ -364,7 +377,7 @@ namespace Horker.Data
 
             var templ = new StringBuilder();
             templ.Append("create table ");
-            templ.Append(_builder.QuoteIdentifier(TableName));
+            templ.Append(_qualifiedTableName);
             templ.Append(" (\r\n");
             bool first = true;
             foreach (var f in fields) {
