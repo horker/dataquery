@@ -66,6 +66,7 @@ task Build {
 
     Copy-ItemSkip "$PSScriptRoot\scripts\*" $DebugModulePath
     Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\Horker.Data.dll" $DebugModulePath
+    Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\Horker.Data.pdb" $DebugModulePath
     Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\System.Data.SQLite.dll" $DebugModulePath
     Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\x64\*" "$DebugModulePath\x64"
     Copy-ItemSkip "$PSScriptRoot\cs\dataquery\bin\Debug\x86\*" "$DebugModulePath\x86"

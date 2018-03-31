@@ -123,12 +123,22 @@ namespace Horker.Data
 
                         while (reader.Read()) {
                             var obj = new PSObject();
+                            var exprCount = 1;
                             for (int i = 0; i < count; ++i) {
                                 object value = null;
                                 if (PreserveDbNull || !reader.IsDBNull(i)) {
                                     value = reader.GetValue(i);
                                 }
-                                obj.Properties.Add(new PSNoteProperty(fieldNames[i], value));
+
+                                PSNoteProperty prop;
+                                try {
+                                    prop = new PSNoteProperty(fieldNames[i], value);
+                                }
+                                catch (PSArgumentException) {
+                                    prop = new PSNoteProperty("Expr" + exprCount, value);
+                                    ++exprCount;
+                                }
+                                obj.Properties.Add(prop);
                             }
                             WriteObject(obj);
                         }

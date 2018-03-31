@@ -164,7 +164,7 @@ namespace Horker.Data
                                 pa = "@" + count.ToString();
                                 param.ParameterName = pa;
                             }
-                            param.Value = p.Value;
+                            param.Value = p.Value.ToString();
                             cmd.Parameters.Add(param);
 
                             placeholders.Append(pa);
@@ -191,7 +191,7 @@ namespace Horker.Data
                                 pa = "@" + count.ToString();
                                 param.ParameterName = pa;
                             }
-                            param.Value = p.GetValue(InputObject);
+                            param.Value = p.GetValue(InputObject).ToString();
                             cmd.Parameters.Add(param);
 
                             placeholders.Append(pa);
@@ -261,7 +261,6 @@ namespace Horker.Data
         private void CreateTable()
         {
             string stmt;
-            DbCommand cmd;
 
             // Try to select from a table given by TableName in order to find whether such a table exists.
 
@@ -270,23 +269,24 @@ namespace Horker.Data
                 stmt = "select * from " + _builder.QuoteIdentifier(TableName);
                 WriteVerbose(stmt);
 
-                cmd = _connection.CreateCommand();
-                cmd.CommandText = stmt;
+                using (var cmd = _connection.CreateCommand())
+                using (var adaptor = _factory.CreateDataAdapter()) {
+                    cmd.CommandText = stmt;
+                    adaptor.SelectCommand = cmd;
 
-                var adaptor = _factory.CreateDataAdapter();
-                adaptor.SelectCommand = cmd;
+                    using (var dataSet = new DataSet()) {
+                        adaptor.FillSchema(dataSet, SchemaType.Mapped);
 
-                var dataSet = new DataSet();
-                adaptor.FillSchema(dataSet, SchemaType.Mapped);
+                        var table = dataSet.Tables[0];
 
-                var table = dataSet.Tables[0];
+                        _fieldSet = new HashSet<string>();
+                        foreach (DataColumn c in table.Columns) {
+                            _fieldSet.Add(c.ColumnName);
+                        }
+                    }
 
-                _fieldSet = new HashSet<string>();
-                foreach (DataColumn c in table.Columns) {
-                    _fieldSet.Add(c.ColumnName);
+                    tableExists = true;
                 }
-
-                tableExists = true;
             }
             catch (DbException) {
                 // Ignore an exception
@@ -324,7 +324,7 @@ namespace Horker.Data
 
             // Create a table
 
-            string stringType = "varchar"; // ANSI SQL standard
+            string stringType = "varchar(4000)"; // ANSI SQL standard
 
             if (TypeName != null) {
                 stringType = TypeName;
@@ -334,13 +334,32 @@ namespace Horker.Data
                 stringType = "";
             }
             else if (_connection is System.Data.SqlClient.SqlConnection) {
-                // SQL Server supports nvarchar, which represents a UTF-16 string
-                // and is safe for any database encoding
-                stringType = "nvarchar";
+                // SQL Server supports nvarchar that represents a UTF-16 string.
+                // It is safe for any database encoding.
+                stringType = "nvarchar(4000)";
             }
             else if (_connection.GetType().FullName.Contains("Oracle")) {
                 // Conventional type name of string for Oracle
-                stringType = "nvarchar2";
+                stringType = "nvarchar2(4000)";
+            }
+            else {
+                long length = 4000;
+                try {
+                    var schema = _connection.GetSchema("DataTypes");
+                    foreach (DataRow row in schema.Rows) {
+                        var columnName = row.Field<string>("TypeName");
+                        if (columnName == "varchar" || columnName == "VARCHAR" || columnName == "Varchar") {
+                            long l = row.Field<long>("ColumnSize");
+                            length = Math.Min(4000, l);
+                            break;
+                        }
+                    }
+                    stringType = String.Format("varchar({0})", length);
+                }
+                catch (Exception) {
+                    // Because schema information varies from provider to provider,
+                    // when an error occurs, just ignore it and apply standard type definition.
+                }
             }
 
             var templ = new StringBuilder();
@@ -362,33 +381,36 @@ namespace Horker.Data
             stmt = String.Format(templ.ToString(), stringType);
             WriteVerbose(stmt);
 
-            cmd = _connection.CreateCommand();
-            cmd.CommandText = stmt;
-            cmd.ExecuteNonQuery();
+            using (var cmd = _connection.CreateCommand()) {
+                cmd.CommandText = stmt;
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private bool TestNamedParameterSupport()
         {
-            try {
-                var cmd = _connection.CreateCommand();
-                var stmt = "select 1 = @param";
-                cmd.CommandText = stmt;
-                WriteVerbose(stmt);
+            using (var cmd = _connection.CreateCommand()) {
+                try {
+                    var stmt = "select 1 + @param";
+                    cmd.CommandText = stmt;
+                    WriteVerbose(stmt);
 
-                var param = cmd.CreateParameter();
-                param.ParameterName = "@param";
-                param.Value = 1;
+                    var param = cmd.CreateParameter();
+                    param.ParameterName = "@param";
+                    param.Value = 1;
 
-                cmd.Parameters.Add(param);
+                    cmd.Parameters.Add(param);
 
-                var reader = cmd.ExecuteReader();
-                reader.Read();
-                reader.GetValue(0);
+                    using (var reader = cmd.ExecuteReader()) {
+                        reader.Read();
+                        reader.GetValue(0);
+                    }
 
-                return true;
-            }
-            catch (DbException) {
-                return false;
+                    return true;
+                }
+                catch (DbException) {
+                    return false;
+                }
             }
         }
     }
