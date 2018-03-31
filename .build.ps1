@@ -1,4 +1,4 @@
-task . Compile, Build, BuildHelp, ImportDebug
+task . Compile, Build, BuildHelp, Test, ImportDebug
 
 Set-StrictMode -Version 4
 
@@ -85,6 +85,10 @@ task BuildHelp `
   . $HELPGEN $HELP_INPUT
 
   Copy-Item $HELP_INTERM $MODULE_PATH
+}
+
+task Test {
+  Invoke-Pester "$PSScriptRoot\tests"
 }
 
 task ImportDebug {
