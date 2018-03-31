@@ -171,7 +171,10 @@ namespace Horker.Data
                                 pa = "@" + count.ToString();
                                 param.ParameterName = pa;
                             }
-                            param.Value = p.Value.ToString();
+
+                            if (p.Value != null) {
+                                param.Value = p.Value.ToString();
+                            }
                             cmd.Parameters.Add(param);
 
                             placeholders.Append(pa);
@@ -198,7 +201,11 @@ namespace Horker.Data
                                 pa = "@" + count.ToString();
                                 param.ParameterName = pa;
                             }
-                            param.Value = p.GetValue(InputObject).ToString();
+
+                            var value = p.GetValue(InputObject);
+                            if (value != null) {
+                                param.Value = value.ToString();
+                            }
                             cmd.Parameters.Add(param);
 
                             placeholders.Append(pa);
