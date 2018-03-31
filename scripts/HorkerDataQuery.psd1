@@ -12,7 +12,7 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.3'
+ModuleVersion = '1.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = ''
@@ -132,9 +132,11 @@ PrivateData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
         Tags = @(
-          'database', 'relational', 'rdb', 'rdbms', 'query', 'schema'
-          'sql', 'server', 'sqlserver', 'oracle', 'mysql', 'postgresql', 'sqlite', 'access', 'msaccess',
+          'database', 'relational', 'rdb', 'rdbms', 'schema', 'table', 'column',
           'data', 'analysis', 'conversion',
+          'query', 'select', 'insert', 'update', 'delete', 'create', 'drop',
+          'sql', 'server', 'sqlserver', 'oracle', 'mysql', 'postgresql',
+          'firebird', 'db2', 'sqlite', 'access', 'msaccess',
           'pandas', 'dplyr'
         )
 
@@ -149,11 +151,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
-v1.0.2, v1.0.3
-Several bug fixes
-
-v1.0.1
-Bug fix: Added a missing file in the 32-bit environment
+v1.0.1 - v1.0.4
+Bug fixes
 
 v1.0.0
 First release
