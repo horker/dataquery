@@ -38,7 +38,7 @@ namespace Horker.Data
         public DbConnection Connection { get; set; }
 
         /// <summary>
-        /// <para type="description">A table name into which objects will be inserted. The value is not quoted and embeded into SQL statements that the cmdlet generates internally.</para>
+        /// <para type="description">A table name into which objects will be inserted. The value is embeded without being quoted into SQL statements that the cmdlet generates internally.</para>
         /// </summary>
         [Parameter(Position = 1, Mandatory = true)]
         public string TableName { get; set; }
