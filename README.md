@@ -121,7 +121,22 @@ PS>
 
 (The result depends on the environment.)
 
-In the current version, all columns defined by `Export-DataTable` are of the string type. If you want to specify columns and types, create your own table with the `CREATE TABLE` statement before export.
+In the current version, all columns defined by `Export-DataTable` are of the string type. If you want to specify columns and types, create a table with the `CREATE TABLE` statement before export:
+
+```PowerShell
+PS> idq test.db "drop table WindowsDir"
+PS> idq test.db "create table WindowsDir (Name text, Length int)"
+PS> dir C:\Windows -File | Export-DataTable test.db WindowsDir
+PS> idq test.db "select * from WindowsDir limit 3" | ft
+
+Name              Length
+----              ------
+ativpsrm.bin           0
+bfsvc.exe          71168
+BlendSettings.ini     23
+
+PS>
+```
 
 ### In-memory Database
 
