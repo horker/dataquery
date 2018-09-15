@@ -55,15 +55,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration.cs" />
-    <Compile Include="DbProviderFactory.cs" />
-    <Compile Include="Connection.cs" />
-    <Compile Include="ConnectionSetting.cs" />
-    <Compile Include="ConnectionString.cs" />
-    <Compile Include="InvokeDataQuery.cs" />
-    <Compile Include="ExportDataTable.cs" />
+    <Compile Include="Cmdlets\Configuration.cs" />
+    <Compile Include="Classes\ConnectionOpener.cs" />
+    <Compile Include="Cmdlets\DbProviderFactory.cs" />
+    <Compile Include="Cmdlets\Connection.cs" />
+    <Compile Include="Classes\ConnectionSetting.cs" />
+    <Compile Include="Cmdlets\ConnectionString.cs" />
+    <Compile Include="Cmdlets\InvokeDataQuery.cs" />
+    <Compile Include="Cmdlets\ExportDataTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Schema.cs" />
+    <Compile Include="Cmdlets\Schema.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
