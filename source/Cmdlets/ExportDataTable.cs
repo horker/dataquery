@@ -199,8 +199,13 @@ namespace Horker.Data
                                     param.ParameterName = pa;
                                 }
 
-                                if (p.Value != null)
-                                    param.Value = p.Value.ToString();
+                                var value = p.Value;
+                                if (value != null)
+                                {
+                                    if (value is PSObject)
+                                        value = (value as PSObject).BaseObject;
+                                    param.Value = value;
+                                }
 
                                 cmd.Parameters.Add(param);
 
@@ -236,7 +241,11 @@ namespace Horker.Data
 
                                 var value = p.GetValue(InputObject);
                                 if (value != null)
-                                    param.Value = value.ToString();
+                                {
+                                    if (value is PSObject)
+                                        value = (value as PSObject).BaseObject;
+                                    param.Value = value;
+                                }
 
                                 cmd.Parameters.Add(param);
 
