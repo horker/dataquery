@@ -67,94 +67,104 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             var opener = new ConnectionOpener(FileOrName, Connection, null, null);
             var connection = opener.Connection;
-            bool connectionOpen = opener.ConnectionOpen;
+            bool connectionOpened = opener.ConnectionOpened;
 
             try {
-                DbCommand cmd = connection.CreateCommand();
-                cmd.CommandText = Query;
+                using (DbCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = Query;
 
-                if (MyInvocation.BoundParameters.ContainsKey("Timeout")) {
-                    cmd.CommandTimeout = Timeout;
-                }
+                    if (MyInvocation.BoundParameters.ContainsKey("Timeout"))
+                        cmd.CommandTimeout = Timeout;
 
-                if (Parameters != null) {
-                    if (Parameters is IDictionary) {
-                        foreach (DictionaryEntry entry in Parameters as IDictionary) {
-                            var param = cmd.CreateParameter();
-                            param.ParameterName = (string)entry.Key;
-                            param.Value = entry.Value;
-                            cmd.Parameters.Add(param);
-                        }
-                    }
-                    else {
-                        foreach (var value in Parameters) {
-                            var param = cmd.CreateParameter();
-                            param.Value = value;
-                            cmd.Parameters.Add(param);
-                        }
-                    }
-                }
-
-                if (AsDataRow) {
-                    var factory = DbProviderFactories.GetFactory(connection);
-                    var adaptor = factory.CreateDataAdapter();
-                    var dataSet = new DataSet();
-                    adaptor.SelectCommand = cmd;
-                    adaptor.Fill(dataSet);
-                    GetDataQueryResult.RecordsAffected = -1;
-                    foreach (var row in dataSet.Tables[0].Rows) {
-                        WriteObject(row);
-                    }
-                }
-                else {
-                    using (var reader = cmd.ExecuteReader()) {
-                        GetDataQueryResult.RecordsAffected = reader.RecordsAffected;
-
-                        var count = reader.FieldCount;
-
-                        string[] fieldNames = new string[count];
-                        for (int i = 0; i < count; ++i) {
-                            fieldNames[i] = reader.GetName(i);
-                        }
-
-                        while (reader.Read()) {
-                            var obj = new PSObject();
-                            var exprCount = 1;
-                            for (int i = 0; i < count; ++i) {
-                                object value = null;
-                                if (PreserveDbNull || !reader.IsDBNull(i)) {
-                                    value = reader.GetValue(i);
-                                }
-
-                                PSNoteProperty prop;
-                                try {
-                                    prop = new PSNoteProperty(fieldNames[i], value);
-                                }
-                                catch (PSArgumentException) {
-                                    prop = new PSNoteProperty("Expr" + exprCount, value);
-                                    ++exprCount;
-                                }
-                                obj.Properties.Add(prop);
+                    if (Parameters != null)
+                    {
+                        if (Parameters is IDictionary)
+                        {
+                            foreach (DictionaryEntry entry in Parameters as IDictionary)
+                            {
+                                var param = cmd.CreateParameter();
+                                param.ParameterName = (string)entry.Key;
+                                param.Value = entry.Value;
+                                cmd.Parameters.Add(param);
                             }
-                            WriteObject(obj);
+                        }
+                        else
+                        {
+                            foreach (var value in Parameters)
+                            {
+                                var param = cmd.CreateParameter();
+                                param.Value = value;
+                                cmd.Parameters.Add(param);
+                            }
                         }
                     }
-                }
 
-                if (ShowRecordsAffected) {
-                    WriteObject(GetDataQueryResult.RecordsAffected);
+                    if (AsDataRow)
+                    {
+                        var factory = DbProviderFactories.GetFactory(connection);
+                        using (var adaptor = factory.CreateDataAdapter())
+                        using (var dataSet = new DataSet())
+                        {
+                            adaptor.SelectCommand = cmd;
+                            adaptor.Fill(dataSet);
+                            GetDataQueryResult.RecordsAffected = -1;
+                            foreach (var row in dataSet.Tables[0].Rows)
+                                WriteObject(row);
+                        }
+                    }
+                    else
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            GetDataQueryResult.RecordsAffected = reader.RecordsAffected;
+
+                            var count = reader.FieldCount;
+
+                            string[] fieldNames = new string[count];
+                            for (int i = 0; i < count; ++i)
+                                fieldNames[i] = reader.GetName(i);
+
+                            while (reader.Read())
+                            {
+                                var obj = new PSObject();
+                                var exprCount = 1;
+                                for (int i = 0; i < count; ++i)
+                                {
+                                    object value = null;
+                                    if (PreserveDbNull || !reader.IsDBNull(i))
+                                        value = reader.GetValue(i);
+
+                                    PSNoteProperty prop;
+                                    try
+                                    {
+                                        prop = new PSNoteProperty(fieldNames[i], value);
+                                    }
+                                    catch (PSArgumentException)
+                                    {
+                                        prop = new PSNoteProperty("Expr" + exprCount, value);
+                                        ++exprCount;
+                                    }
+                                    obj.Properties.Add(prop);
+                                }
+                                WriteObject(obj);
+                            }
+                        }
+                    }
+
+                    if (ShowRecordsAffected)
+                        WriteObject(GetDataQueryResult.RecordsAffected);
                 }
             }
-            catch (Exception ex) {
-                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+            catch (Exception e) {
+                WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
             }
             finally {
-                if (connectionOpen) {
+                if (connectionOpened) {
                     connection.Close();
+                    connection.Dispose();
                 }
             }
         }
@@ -171,8 +181,6 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             WriteObject(RecordsAffected);
         }
     }

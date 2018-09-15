@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
 using System.Management.Automation;
-using System.Text;
-using System.Threading.Tasks;
 
 #pragma warning disable CS1591
 
@@ -38,31 +34,38 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             var opener = new ConnectionOpener(FileOrName, Connection, null, null);
             var connection = opener.Connection;
-            var connectionOpen = opener.ConnectionOpen;
+            var connectionOpen = opener.ConnectionOpened;
 
-            try {
+            try
+            {
                 DataTable schema;
-                if (CollectionName != null && CollectionName != "") {
+                if (CollectionName != null && CollectionName != "")
                     schema = connection.GetSchema(CollectionName);
-                }
-                else {
+                else
                     schema = connection.GetSchema();
-                }
 
-                foreach (var row in schema.Rows) {
-                    WriteObject(row);
+                try
+                {
+                    foreach (var row in schema.Rows)
+                        WriteObject(row);
+                }
+                finally
+                {
+                    schema.Dispose();
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
-            finally {
-                if (connectionOpen) {
+            finally
+            {
+                if (connectionOpen)
+                {
                     connection.Close();
+                    connection.Dispose();
                 }
             }
         }

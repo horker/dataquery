@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Management.Automation;
-using System.Data.Common;
 using System.Configuration;
+using System.Data.Common;
+using System.Management.Automation;
 using System.Reflection;
 
 #pragma warning disable CS1591
@@ -37,21 +37,20 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
-            try {
+            try
+            {
                 AddConnectionString(Name, ProviderName, ConnectionString);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
         }
 
         public static void AddConnectionString(string name, string providerName, string connectionString)
         {
-            if (ConfigurationManager.ConnectionStrings[name] != null) {
+            if (ConfigurationManager.ConnectionStrings[name] != null)
                 throw new RuntimeException("Connection string name already exists");
-            }
 
             // Source:
             // https://stackoverflow.com/questions/360024/how-do-i-set-a-connection-string-config-programmatically-in-net
@@ -89,21 +88,20 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
-            try {
+            try
+            {
                 RemoveConnectionString(Name);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
         }
 
         public static void RemoveConnectionString(string name)
         {
-            if (ConfigurationManager.ConnectionStrings[name] == null) {
+            if (ConfigurationManager.ConnectionStrings[name] == null)
                 throw new RuntimeException("Connection string name not found");
-            }
 
             var collection = ConfigurationManager.ConnectionStrings;
 
@@ -127,13 +125,11 @@ namespace Horker.Data
             var collection = ConfigurationManager.ConnectionStrings;
 
             var names = new List<string>();
-            foreach (ConnectionStringSettings cs in collection) {
+            foreach (ConnectionStringSettings cs in collection)
                 names.Add(cs.Name);
-            }
 
-            foreach (var name in names) {
+            foreach (var name in names)
                 RemoveConnectionString(name);
-            }
         }
     }
 
@@ -146,8 +142,6 @@ namespace Horker.Data
     {
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             WriteObject(ConfigurationManager.ConnectionStrings);
         }
     }
@@ -180,19 +174,18 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             var factory = DbProviderFactories.GetFactory(ProviderName);
             var builder = factory.CreateConnectionStringBuilder();
 
-            foreach (DictionaryEntry entry in Parameters) {
+            foreach (DictionaryEntry entry in Parameters)
                 builder.Add(entry.Key.ToString(), entry.Value);
-            }
 
             var cs = builder.ConnectionString;
 
-            if (TestConnection) {
-                try {
+            if (TestConnection)
+            {
+                try
+                {
                     var connection = factory.CreateConnection();
                     connection.ConnectionString = cs;
                     connection.Open();
@@ -200,7 +193,8 @@ namespace Horker.Data
 
                     Host.UI.WriteLine(ConsoleColor.Cyan, Host.UI.RawUI.BackgroundColor, "Connection test succeeded");
                 }
-                catch (DbException ex) {
+                catch (DbException ex)
+                {
                     WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
                 }
             }

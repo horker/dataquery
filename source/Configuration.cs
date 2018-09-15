@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Xml;
 using System.Management.Automation;
+using System.Xml;
 
 #pragma warning disable CS1591
 
@@ -21,12 +21,12 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
-            try {
+            try
+            {
                 LoadConfiguration(ConfigurationFile);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
         }
@@ -44,12 +44,15 @@ namespace Horker.Data
         {
             var baseNodes = doc.DocumentElement.SelectNodes("/configuration/system.data/DbProviderFactories");
 
-            foreach (XmlNode node in baseNodes) {
+            foreach (XmlNode node in baseNodes)
+            {
                 var nodes = node.ChildNodes;
 
                 string invariant;
-                foreach (XmlNode n in nodes) {
-                    switch (n.Name) {
+                foreach (XmlNode n in nodes)
+                {
+                    switch (n.Name)
+                    {
                         case "add":
                             var name = n.Attributes["name"].InnerText;
                             invariant = n.Attributes["invariant"].InnerText;
@@ -60,19 +63,23 @@ namespace Horker.Data
 
                         case "remove":
                             invariant = n.Attributes["invariant"].InnerText;
-                            try {
+                            try
+                            {
                                 UnregisterDbProviderFactory.RemoveDbProviderFactory(invariant);
                             }
-                            catch (RuntimeException) {
+                            catch (RuntimeException)
+                            {
                                 // Ignore error
                             }
                             break;
 
                         case "clear":
-                            try {
+                            try
+                            {
                                 UnregisterDbProviderFactory.RemoveAllDbProviderFactories();
                             }
-                            catch (RuntimeException) {
+                            catch (RuntimeException)
+                            {
                                 // Ignore error
                             }
                             break;
@@ -87,12 +94,15 @@ namespace Horker.Data
         private static void RegisterConnectionString(XmlDocument doc)
         {
             var baseNodes = doc.DocumentElement.SelectNodes("/configuration/connectionStrings");
-            foreach (XmlNode node in baseNodes) {
+            foreach (XmlNode node in baseNodes)
+            {
                 var nodes = node.ChildNodes;
 
                 string name;
-                foreach (XmlNode n in nodes) {
-                    switch (n.Name) {
+                foreach (XmlNode n in nodes)
+                {
+                    switch (n.Name)
+                    {
                         case "add":
                             name = n.Attributes["name"].InnerText;
                             var providerName = n.Attributes["providerName"].InnerText;
@@ -103,19 +113,23 @@ namespace Horker.Data
 
                         case "remove":
                             name = n.Attributes["name"].InnerText;
-                            try {
+                            try
+                            {
                                 UnregisterDataConnectionString.RemoveConnectionString(name);
                             }
-                            catch (RuntimeException) {
+                            catch (RuntimeException)
+                            {
                                 // Ignore error
                             }
                             break;
 
                         case "clear":
-                            try {
+                            try
+                            {
                                 UnregisterDataConnectionString.RemoveAllConnectionStrings();
                             }
-                            catch (RuntimeException) {
+                            catch (RuntimeException)
+                            {
                                 // Ignore error
                             }
                             break;

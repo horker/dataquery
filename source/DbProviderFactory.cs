@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Management.Automation;
+using System.Configuration;
 using System.Data;
 using System.Data.Common;
-using System.Configuration;
+using System.Management.Automation;
 
 #pragma warning disable CS1591
 
@@ -41,28 +41,30 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
-            try {
+            try
+            {
                 AddDbProviderFactory(Name, Invariant, Description, Type);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
         }
 
         public static void AddDbProviderFactory(string name, string invariant, string description, string type)
         {
-            DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet;
-            var rows = dataSet.Tables[0].Rows;
+            using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
+            {
+                var rows = dataSet.Tables[0].Rows;
 
-            foreach (DataRow r in rows) {
-                if (r["InvariantName"].ToString() == invariant) {
-                    throw new RuntimeException("Invariant name already exists");
+                foreach (DataRow r in rows)
+                {
+                    if (r["InvariantName"].ToString() == invariant)
+                        throw new RuntimeException("Invariant name already exists");
                 }
-            }
 
-            rows.Add(name, description, invariant, type);
+                rows.Add(name, description, invariant, type);
+            }
         }
     }
 
@@ -81,25 +83,29 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
-            try {
+            try
+            {
                 RemoveDbProviderFactory(ProviderName);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
         }
 
         public static void RemoveDbProviderFactory(string invariant)
         {
-            DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet;
-            var rows = dataSet.Tables[0].Rows;
+            using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
+            {
+                var rows = dataSet.Tables[0].Rows;
 
-            foreach (DataRow r in rows) {
-                if (r["InvariantName"].ToString() == invariant) {
-                    rows.Remove(r);
-                    return;
+                foreach (DataRow r in rows)
+                {
+                    if (r["InvariantName"].ToString() == invariant)
+                    {
+                        rows.Remove(r);
+                        return;
+                    }
                 }
             }
 
@@ -108,11 +114,12 @@ namespace Horker.Data
 
         public static void RemoveAllDbProviderFactories()
         {
-            DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet;
-            var rows = dataSet.Tables[0].Rows;
+            using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
+            {
+                var rows = dataSet.Tables[0].Rows;
 
-            while (rows.Count > 0) {
-                rows.RemoveAt(rows.Count - 1);
+                while (rows.Count > 0)
+                    rows.RemoveAt(rows.Count - 1);
             }
         }
     }
@@ -133,9 +140,8 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
-            if (ProviderName != null && ProviderName != "") {
+            if (ProviderName != null && ProviderName != "")
+            {
                 WriteObject(DbProviderFactories.GetFactory(ProviderName));
                 return;
             }

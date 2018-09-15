@@ -1,4 +1,4 @@
-task . Compile, Build, BuildHelp, Test, ImportDebug
+task . Compile, Build, BuildHelp, ImportDebug, Test
 
 Set-StrictMode -Version 4
 
@@ -62,6 +62,7 @@ task Build {
 
     Copy-ItemSkip "$SCRIPT_PATH\*" $MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\Horker.Data.dll" $MODULE_PATH
+    Copy-ItemSkip "$SOURCE_PATH\bin\Release\Horker.Data.pdb" $DEBUG_MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\System.Data.SQLite.dll" $MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\x64\*" "$MODULE_PATH\x64"
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\x86\*" "$MODULE_PATH\x86"

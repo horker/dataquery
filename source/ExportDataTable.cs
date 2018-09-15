@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Management.Automation;
 using System.Data;
 using System.Data.Common;
+using System.Management.Automation;
+using System.Text;
 
 #pragma warning disable CS1591
 
@@ -56,7 +55,7 @@ namespace Horker.Data
         public string TypeName { get; set; }
 
         private DbConnection _connection;
-        private bool _connectionOpen;
+        private bool _connectionOpened;
         private DbProviderFactory _factory;
         private DbCommandBuilder _builder;
 
@@ -69,32 +68,53 @@ namespace Horker.Data
 
         private DbTransaction _transaction;
 
+        private void DisposeResources()
+        {
+            if (_connectionOpened)
+            {
+                if (_connection.State == ConnectionState.Open)
+                    _connection.Close();
+
+                _connection.Dispose();
+            }
+
+            if (_builder != null)
+                _builder.Dispose();
+
+            if (_transaction != null)
+                _transaction.Dispose();
+        }
+
         protected override void BeginProcessing()
         {
-            base.BeginProcessing();
-
             var opener = new ConnectionOpener(FileOrName, Connection, null, null);
             _connection = opener.Connection;
-            _connectionOpen = opener.ConnectionOpen;
+            _connectionOpened = opener.ConnectionOpened;
 
-            try {
-                if (_connection == null) {
+            try
+            {
+                if (_connection == null)
+                {
                     WriteError(new ErrorRecord(new RuntimeException("Can't open a connection"), "", ErrorCategory.NotSpecified, null));
                     throw new PipelineStoppedException();
                 }
 
                 // ODBC and OLEDB Access connections fail to obtain the corresponding factories.
-                if (_connection is System.Data.Odbc.OdbcConnection) {
+                if (_connection is System.Data.Odbc.OdbcConnection)
+                {
                     _factory = DbProviderFactories.GetFactory("System.Data.Odbc");
                 }
-                else if (_connection is System.Data.OleDb.OleDbConnection) {
+                else if (_connection is System.Data.OleDb.OleDbConnection)
+                {
                     _factory = DbProviderFactories.GetFactory("System.Data.OleDb");
                 }
-                else {
+                else
+                {
                     _factory = DbProviderFactories.GetFactory(_connection);
                 }
 
-                if (_factory == null) {
+                if (_factory == null)
+                {
                     WriteError(new ErrorRecord(new RuntimeException("Failed to obtain a DbProviderFactory object"), "", ErrorCategory.NotSpecified, null));
                     throw new PipelineStoppedException();
                 }
@@ -103,33 +123,34 @@ namespace Horker.Data
 
                 // Supply a command builder with an adaptor object because some providers' builders
                 // (including those of ODBC and OLEDB Access) require an active connection to make QuoteIndentifier() work.
-                var adaptor = _factory.CreateDataAdapter();
-                var cmd = _connection.CreateCommand();
-                cmd.CommandText = "select 1";
-                adaptor.SelectCommand = cmd;
-                _builder.DataAdapter = adaptor;
+                using (var adaptor = _factory.CreateDataAdapter())
+                using (var cmd = _connection.CreateCommand())
+                {
+                    cmd.CommandText = "select 1";
+                    adaptor.SelectCommand = cmd;
+                    _builder.DataAdapter = adaptor;
+                }
 
                 _useNamedParameters = false;
             }
-            catch (Exception ex) {
-                if (_connectionOpen) {
-                    _connection.Close();
-                }
-                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+            catch (Exception e)
+            {
+                DisposeResources();
+
+                WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
                 throw new PipelineStoppedException();
             }
         }
 
         protected override void ProcessRecord()
         {
-            try {
-                base.ProcessRecord();
-
-                if (InputObject == null) {
+            try
+            {
+                if (InputObject == null)
                     return;
-                }
 
-                if (_fieldSet == null) {
+                if (_fieldSet == null)
+                {
                     _qualifiedTableName = GetQualifiedTableName();
 
                     CreateTable();
@@ -141,135 +162,139 @@ namespace Horker.Data
                     _transaction = _connection.BeginTransaction();
                 }
 
-                var cmd = _connection.CreateCommand();
-                cmd.CommandText = _insertStmt;
-                cmd.Transaction = _transaction;
+                using (var cmd = _connection.CreateCommand())
+                {
+                    cmd.CommandText = _insertStmt;
+                    cmd.Transaction = _transaction;
 
-                var buffer = new StringBuilder(_insertStmt);
-                var placeholders = new StringBuilder();
+                    var buffer = new StringBuilder(_insertStmt);
+                    var placeholders = new StringBuilder();
 
-                string pa = "?";
-                var count = 0;
-                if (InputObject is PSObject) {
-                    var obj = (PSObject)InputObject;
-                    foreach (var p in obj.Properties) {
-                        if (!p.IsGettable || !p.IsInstance) {
-                            continue;
-                        }
-                        if (_fieldSet.Contains(p.Name)) {
-                            if (count > 0) {
-                                buffer.Append(',');
-                                placeholders.Append(',');
+                    string pa = "?";
+                    var count = 0;
+                    if (InputObject is PSObject)
+                    {
+                        var obj = (PSObject)InputObject;
+                        foreach (var p in obj.Properties)
+                        {
+                            if (!p.IsGettable || !p.IsInstance)
+                                continue;
+
+                            if (_fieldSet.Contains(p.Name))
+                            {
+                                if (count > 0)
+                                {
+                                    buffer.Append(',');
+                                    placeholders.Append(',');
+                                }
+                                ++count;
+
+                                var qualified = _builder.QuoteIdentifier(p.Name);
+                                buffer.Append(qualified);
+
+                                var param = cmd.CreateParameter();
+                                if (_useNamedParameters)
+                                {
+                                    pa = "@" + count.ToString();
+                                    param.ParameterName = pa;
+                                }
+
+                                if (p.Value != null)
+                                    param.Value = p.Value.ToString();
+
+                                cmd.Parameters.Add(param);
+
+                                placeholders.Append(pa);
                             }
-                            ++count;
-
-                            var qualified = _builder.QuoteIdentifier(p.Name);
-                            buffer.Append(qualified);
-
-                            var param = cmd.CreateParameter();
-                            if (_useNamedParameters) {
-                                pa = "@" + count.ToString();
-                                param.ParameterName = pa;
-                            }
-
-                            if (p.Value != null) {
-                                param.Value = p.Value.ToString();
-                            }
-                            cmd.Parameters.Add(param);
-
-                            placeholders.Append(pa);
-                        }
-                    }
-                }
-                else {
-                    foreach (var p in InputObject.GetType().GetProperties()) {
-                        if (!p.CanRead) {
-                            continue;
-                        }
-                        if (_fieldSet.Contains(p.Name)) {
-                            if (count > 0) {
-                                buffer.Append(',');
-                                placeholders.Append(',');
-                            }
-                            ++count;
-
-                            var qualified = _builder.QuoteIdentifier(p.Name);
-                            buffer.Append(qualified);
-
-                            var param = cmd.CreateParameter();
-                            if (_useNamedParameters) {
-                                pa = "@" + count.ToString();
-                                param.ParameterName = pa;
-                            }
-
-                            var value = p.GetValue(InputObject);
-                            if (value != null) {
-                                param.Value = value.ToString();
-                            }
-                            cmd.Parameters.Add(param);
-
-                            placeholders.Append(pa);
                         }
                     }
-                }
+                    else
+                    {
+                        foreach (var p in InputObject.GetType().GetProperties())
+                        {
+                            if (!p.CanRead)
+                                continue;
 
-                // If there are no columns to be inserted, just skip.
-                if (placeholders.Length == 0) {
-                    return;
-                }
+                            if (_fieldSet.Contains(p.Name))
+                            {
+                                if (count > 0)
+                                {
+                                    buffer.Append(',');
+                                    placeholders.Append(',');
+                                }
+                                ++count;
 
-                buffer.Append(") values (");
-                buffer.Append(placeholders);
-                buffer.Append(')');
-                var stmt = buffer.ToString();
-                WriteVerbose(stmt);
+                                var qualified = _builder.QuoteIdentifier(p.Name);
+                                buffer.Append(qualified);
 
-                cmd.CommandText = stmt;
+                                var param = cmd.CreateParameter();
+                                if (_useNamedParameters)
+                                {
+                                    pa = "@" + count.ToString();
+                                    param.ParameterName = pa;
+                                }
 
-                var rowsAffected = cmd.ExecuteNonQuery();
-                if (rowsAffected != 1) {
-                    throw new RuntimeException("Insertion failed");
+                                var value = p.GetValue(InputObject);
+                                if (value != null)
+                                    param.Value = value.ToString();
+
+                                cmd.Parameters.Add(param);
+
+                                placeholders.Append(pa);
+                            }
+                        }
+                    }
+
+                    // If there are no columns to be inserted, just skip.
+                    if (placeholders.Length == 0)
+                        return;
+
+                    buffer.Append(") values (");
+                    buffer.Append(placeholders);
+                    buffer.Append(')');
+                    var stmt = buffer.ToString();
+                    WriteVerbose(stmt);
+
+                    cmd.CommandText = stmt;
+
+                    var rowsAffected = cmd.ExecuteNonQuery();
+                    if (rowsAffected != 1)
+                        throw new RuntimeException("Insertion failed");
                 }
             }
-            catch (Exception ex) {
-                if (_transaction != null) {
+            catch (Exception e)
+            {
+                if (_transaction != null)
                     _transaction.Rollback();
-                }
-                if (_connectionOpen) {
-                    _connection.Close();
-                }
-                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+
+                DisposeResources();
+
+                WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
                 throw new PipelineStoppedException();
             }
         }
 
         protected override void EndProcessing()
         {
-            try {
-                base.EndProcessing();
-
-                if (_transaction != null) {
+            try
+            {
+                if (_transaction != null)
                     _transaction.Commit();
-                }
             }
-            catch (Exception ex) {
-                WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
+            catch (Exception e)
+            {
+                WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
                 throw new PipelineStoppedException();
             }
-            finally {
-                if (_connectionOpen) {
-                    _connection.Close();
-                }
+            finally
+            {
+                DisposeResources();
             }
         }
 
         protected override void StopProcessing()
         {
-            base.StopProcessing();
-
-            if (_connectionOpen && _connection.State == ConnectionState.Open) {
-                _connection.Close();
-            }
+            DisposeResources();
         }
 
         private string GetQualifiedTableName()
@@ -285,59 +310,62 @@ namespace Horker.Data
             // Try to select from a table given by TableName in order to find whether such a table exists.
 
             bool tableExists = false;
-            try {
+            try
+            {
                 stmt = "select * from " + _qualifiedTableName;
                 WriteVerbose(stmt);
 
                 using (var cmd = _connection.CreateCommand())
-                using (var adaptor = _factory.CreateDataAdapter()) {
+                using (var adaptor = _factory.CreateDataAdapter())
+                {
                     cmd.CommandText = stmt;
                     adaptor.SelectCommand = cmd;
 
-                    using (var dataSet = new DataSet()) {
+                    using (var dataSet = new DataSet())
+                    {
                         adaptor.FillSchema(dataSet, SchemaType.Mapped);
 
                         var table = dataSet.Tables[0];
 
                         _fieldSet = new HashSet<string>();
-                        foreach (DataColumn c in table.Columns) {
+                        foreach (DataColumn c in table.Columns)
                             _fieldSet.Add(c.ColumnName);
-                        }
                     }
 
                     tableExists = true;
                 }
             }
-            catch (DbException) {
+            catch (DbException)
+            {
                 // Ignore an exception
             }
 
-            if (tableExists) {
+            if (tableExists)
                 return;
-            }
 
             // Collect field names from the input object
 
             var fields = new List<string>();
-            if (InputObject is PSObject) {
+            if (InputObject is PSObject)
+            {
                 var obj = (PSObject)InputObject;
-                foreach (var p in obj.Properties) {
+                foreach (var p in obj.Properties)
                     fields.Add(p.Name);
-                }
             }
-            else {
-                foreach (var p in InputObject.GetType().GetProperties()) {
-                    if (!p.CanRead) {
+            else
+            {
+                foreach (var p in InputObject.GetType().GetProperties())
+                {
+                    if (!p.CanRead)
                         continue;
-                    }
                     fields.Add(p.Name);
                 }
             }
 
-            if (AdditionalColumns != null) {
-                foreach (var c in AdditionalColumns) {
+            if (AdditionalColumns != null)
+            {
+                foreach (var c in AdditionalColumns)
                     fields.Add(c);
-                }
             }
 
             _fieldSet = new HashSet<string>(fields);
@@ -346,37 +374,49 @@ namespace Horker.Data
 
             string stringType = "varchar(4000)"; // ANSI SQL standard
 
-            if (TypeName != null) {
+            if (TypeName != null)
+            {
+                // User-specified type name
                 stringType = TypeName;
             }
-            else if (_connection is System.Data.SQLite.SQLiteConnection) {
+            else if (_connection is System.Data.SQLite.SQLiteConnection)
+            {
                 // SQLite can omit a type
                 stringType = "";
             }
-            else if (_connection is System.Data.SqlClient.SqlConnection) {
+            else if (_connection is System.Data.SqlClient.SqlConnection)
+            {
                 // SQL Server supports nvarchar that represents a UTF-16 string.
                 // It is safe for any database encoding.
                 stringType = "nvarchar(4000)";
             }
-            else if (_connection.GetType().FullName.Contains("Oracle")) {
+            else if (_connection.GetType().FullName.Contains("Oracle"))
+            {
                 // Conventional type name of string for Oracle
                 stringType = "nvarchar2(4000)";
             }
-            else {
+            else
+            {
                 long length = 4000;
-                try {
-                    var schema = _connection.GetSchema("DataTypes");
-                    foreach (DataRow row in schema.Rows) {
-                        var columnName = row.Field<string>("TypeName");
-                        if (columnName == "varchar" || columnName == "VARCHAR" || columnName == "Varchar") {
-                            long l = row.Field<long>("ColumnSize");
-                            length = Math.Min(4000, l);
-                            break;
+                try
+                {
+                    using (var schema = _connection.GetSchema("DataTypes"))
+                    {
+                        foreach (DataRow row in schema.Rows)
+                        {
+                            var columnName = row.Field<string>("TypeName");
+                            if (columnName == "varchar" || columnName == "VARCHAR" || columnName == "Varchar")
+                            {
+                                long l = row.Field<long>("ColumnSize");
+                                length = Math.Min(4000, l);
+                                break;
+                            }
                         }
                     }
                     stringType = String.Format("varchar({0})", length);
                 }
-                catch (Exception) {
+                catch (Exception)
+                {
                     // Because schema information varies from provider to provider,
                     // when an error occurs, just ignore it and apply standard type definition.
                 }
@@ -387,10 +427,11 @@ namespace Horker.Data
             templ.Append(_qualifiedTableName);
             templ.Append(" (\r\n");
             bool first = true;
-            foreach (var f in fields) {
-                if (!first) {
+            foreach (var f in fields)
+            {
+                if (!first)
                     templ.AppendLine(",");
-                }
+
                 first = false;
                 templ.Append("    ");
                 templ.Append(_builder.QuoteIdentifier(f));
@@ -401,7 +442,8 @@ namespace Horker.Data
             stmt = String.Format(templ.ToString(), stringType);
             WriteVerbose(stmt);
 
-            using (var cmd = _connection.CreateCommand()) {
+            using (var cmd = _connection.CreateCommand())
+            {
                 cmd.CommandText = stmt;
                 cmd.ExecuteNonQuery();
             }
@@ -409,8 +451,10 @@ namespace Horker.Data
 
         private bool TestNamedParameterSupport()
         {
-            using (var cmd = _connection.CreateCommand()) {
-                try {
+            using (var cmd = _connection.CreateCommand())
+            {
+                try
+                {
                     var stmt = "select 1 + @param";
                     cmd.CommandText = stmt;
                     WriteVerbose(stmt);
@@ -421,14 +465,16 @@ namespace Horker.Data
 
                     cmd.Parameters.Add(param);
 
-                    using (var reader = cmd.ExecuteReader()) {
+                    using (var reader = cmd.ExecuteReader())
+                    {
                         reader.Read();
                         reader.GetValue(0);
                     }
 
                     return true;
                 }
-                catch (DbException) {
+                catch (DbException)
+                {
                     return false;
                 }
             }

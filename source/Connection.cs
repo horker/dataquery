@@ -11,24 +11,24 @@ namespace Horker.Data
     class ConnectionOpener
     {
         public DbConnection Connection { get; private set; }
-        public bool ConnectionOpen { get; private set; }
+        public bool ConnectionOpened { get; private set; }
 
         public ConnectionOpener(string fileOrName, DbConnection connection, string providerName, string connectionString)
         {
             if (fileOrName != null) {
                 Connection = new FileConnectionSetting(fileOrName).GetConnection();
-                ConnectionOpen = true;
+                ConnectionOpened = true;
             }
             else if (connection != null) {
                 Connection = connection;
-                ConnectionOpen = false;
+                ConnectionOpened = false;
             }
             else {
                 Connection = new ProviderConnectionSetting(providerName, connectionString).GetConnection();
-                ConnectionOpen = true;
+                ConnectionOpened = true;
             }
 
-            if (ConnectionOpen) {
+            if (ConnectionOpened) {
                 GetDataConnectionHistory.AddToHistory(Connection);
             }
         }
@@ -62,8 +62,6 @@ namespace Horker.Data
         protected override void EndProcessing()
         {
             try {
-                base.EndProcessing();
-
                 var opener = new ConnectionOpener(FileOrName, null, ProviderName, ConnectionString);
 
                 WriteObject(opener.Connection);
@@ -89,10 +87,9 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             try {
                 Connection.Close();
+                Connection.Dispose();
             }
             catch (Exception ex) {
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, Connection));
@@ -118,8 +115,6 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            base.EndProcessing();
-
             RemoveClosedConnection();
             foreach (var c in _connectionHistory) {
                 WriteObject(c);
@@ -128,9 +123,16 @@ namespace Horker.Data
 
         private static void RemoveClosedConnection()
         {
-            _connectionHistory.RemoveAll((c) => { return c.State == ConnectionState.Closed; });
+            _connectionHistory.RemoveAll(c => {
+                try
+                {
+                    return c.State == ConnectionState.Closed;
+                }
+                catch (ObjectDisposedException)
+                {
+                    return true;
+                }
+            });
         }
-
-
     }
 }
