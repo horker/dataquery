@@ -75,14 +75,30 @@ namespace Horker.Data
                 if (_connection.State == ConnectionState.Open)
                     _connection.Close();
 
-                _connection.Dispose();
+                try
+                {
+                    _connection.Dispose();
+                }
+                catch (ObjectDisposedException) {}
             }
 
             if (_builder != null)
-                _builder.Dispose();
+            {
+                try
+                {
+                    _builder.Dispose();
+                }
+                catch (ObjectDisposedException) {}
+            }
 
             if (_transaction != null)
-                _transaction.Dispose();
+            {
+                try
+                {
+                    _transaction.Dispose();
+                }
+                catch (ObjectDisposedException) {}
+            }
         }
 
         protected override void BeginProcessing()
