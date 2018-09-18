@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hoker.Data", "Hoker.Data.csproj", "{3CB72D37-FC03-472E-9295-71DC2B216437}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Horker.Data", "Horker.Data.csproj", "{3CB72D37-FC03-472E-9295-71DC2B216437}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
