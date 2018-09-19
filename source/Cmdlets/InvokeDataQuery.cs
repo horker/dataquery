@@ -85,16 +85,28 @@ namespace Horker.Data
                         {
                             foreach (DictionaryEntry entry in Parameters as IDictionary)
                             {
+                                object value;
+                                if (entry.Value is PSObject psobj)
+                                    value = psobj.BaseObject;
+                                else
+                                    value = entry.Value;
+
                                 var param = cmd.CreateParameter();
                                 param.ParameterName = (string)entry.Key;
-                                param.Value = entry.Value;
+                                param.Value = value;
                                 cmd.Parameters.Add(param);
                             }
                         }
                         else
                         {
-                            foreach (var value in Parameters)
+                            foreach (var v in Parameters)
                             {
+                                object value;
+                                if (v is PSObject psobj)
+                                    value = psobj.BaseObject;
+                                else
+                                    value = v;
+
                                 var param = cmd.CreateParameter();
                                 param.Value = value;
                                 cmd.Parameters.Add(param);
