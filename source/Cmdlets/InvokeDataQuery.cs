@@ -65,6 +65,12 @@ namespace Horker.Data
         [Parameter(Mandatory = false)]
         public SwitchParameter AsDataRow { get; set; }
 
+        /// <summary>
+        /// <para type="description">Indicates to return the result data set as System.Data.DataTable instead of an array of PSObjects.</para>
+        /// </summary>
+        [Parameter(Mandatory = false)]
+        public SwitchParameter AsDataTable { get; set; }
+
         protected override void EndProcessing()
         {
             var opener = new ConnectionOpener(FileOrName, Connection, null, null);
@@ -114,7 +120,7 @@ namespace Horker.Data
                         }
                     }
 
-                    if (AsDataRow)
+                    if (AsDataRow || AsDataTable)
                     {
                         var factory = DbProviderFactories.GetFactory(connection);
                         using (var adaptor = factory.CreateDataAdapter())
@@ -123,8 +129,14 @@ namespace Horker.Data
                             adaptor.SelectCommand = cmd;
                             adaptor.Fill(dataSet);
                             GetDataQueryResult.RecordsAffected = -1;
-                            foreach (var row in dataSet.Tables[0].Rows)
-                                WriteObject(row);
+
+                            if (AsDataTable)
+                                WriteObject(dataSet.Tables[0]);
+                            else
+                            {
+                                foreach (var row in dataSet.Tables[0].Rows)
+                                    WriteObject(row);
+                            }
                         }
                     }
                     else
