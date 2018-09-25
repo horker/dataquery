@@ -12,7 +12,7 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.4'
+ModuleVersion = '1.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = ''
@@ -33,10 +33,10 @@ Copyright = '(c) 2018 horker. All rights reserved.'
 Description = "Horker DataQuery is a database query utility based on ADO.NET.
 
 The main features are:
-- Written in C#, so that it works fast for large data
-- Supports every database product that provides the ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB, and ODBC
-- Returns query results as PowerShell objects, and exports PowerShell objects into database tables
-- Reads app.config` or web.config` to define database providers and connection strings
+- Written in C# so that it works fast for large data
+- Supports every database product that provides the ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB and ODBC
+- PowerShell interoperatability; gets query results as PowerShell objects and exports PowerShell objects into database tables
+- Reads app.config or web.config in your app to define database providers and connection strings
 - Gets information from the database schema
 - Provides the built-in SQLite driver
 
@@ -136,8 +136,7 @@ PrivateData = @{
           'data', 'analysis', 'conversion',
           'query', 'select', 'insert', 'update', 'delete', 'create', 'drop',
           'sql', 'server', 'sqlserver', 'oracle', 'mysql', 'postgresql',
-          'firebird', 'db2', 'sqlite', 'access', 'msaccess',
-          'pandas', 'dplyr'
+          'firebird', 'db2', 'sqlite', 'access', 'msaccess'
         )
 
         # A URL to the license for this module.
@@ -151,6 +150,12 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
+v1.0.5
+- Earlier release of native resources (database connections)
+- Improvements of data handling in Export-DataTable
+- Query results as System.Data.DataTable
+- Several improvements and bug fixes
+
 v1.0.1 - v1.0.4
 Bug fixes
 
