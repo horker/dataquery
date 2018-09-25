@@ -39,7 +39,7 @@ namespace Horker.Data
         /// <para type="description">Query parameters.</para>
         /// </summary>
         [Parameter(Position = 2, Mandatory = false)]
-        public ICollection Parameters { get; set; }
+        public object Parameters { get; set; }
 
         /// <summary>
         /// <para type="description">A query timeout in seconds.</para>
@@ -87,9 +87,9 @@ namespace Horker.Data
 
                     if (Parameters != null)
                     {
-                        if (Parameters is IDictionary)
+                        if (Parameters is IDictionary dictParam)
                         {
-                            foreach (DictionaryEntry entry in Parameters as IDictionary)
+                            foreach (DictionaryEntry entry in dictParam)
                             {
                                 object value;
                                 if (entry.Value is PSObject psobj)
@@ -105,7 +105,13 @@ namespace Horker.Data
                         }
                         else
                         {
-                            foreach (var v in Parameters)
+                            ICollection parameters;
+                            if (Parameters is ICollection col)
+                                parameters = col;
+                            else
+                                parameters = new object[] { Parameters };
+
+                            foreach (var v in parameters)
                             {
                                 object value;
                                 if (v is PSObject psobj)

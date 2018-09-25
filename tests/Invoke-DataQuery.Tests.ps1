@@ -54,4 +54,16 @@ Describe "Invoke-DataQuery" {
     $result[0].b | Should -Be 'xxx'
     $result[0].c | Should -Be $null
   }
+
+  It "can take parameters as single object" {
+
+    $result = Invoke-DataQuery $mem "insert into Test (a, b, c) values (?, 'xxx', 3)" 999
+    $result | Should -BeNull
+    Get-DataQueryResult | Should -Be 1
+
+    $result = Invoke-DataQuery $mem "select * from Test"
+
+    $result | Should -BeOfType [PSObject]
+    $result[0].a | Should -Be 999
+  }
 }
