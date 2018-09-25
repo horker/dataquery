@@ -15,6 +15,8 @@ namespace Horker.Data
     /// <para type="description">By default, the DBNull values in the result data set are replaced with normal null values, and the results are returned as a stream of PSObject values. You can change this behavior by the -PreserveDbNull and -AsDataRows switch parameters.</para>
     /// </summary>
     [Cmdlet("Invoke", "DataQuery")]
+    [Alias("idq")]
+    [OutputType(typeof(PSObject), typeof(DataRow), typeof(DataTable))]
     public class InvokeDataQuery : PSCmdlet
     {
         /// <summary>
@@ -205,6 +207,7 @@ namespace Horker.Data
     /// <para type="description">Gets the number of records affected by the last statement by the Invoke-DataQuery cmdlet. If the previous statement is SELECT, the cmdlet will return -1.</para>
     /// </summary>
     [Cmdlet("Get", "DataQueryResult")]
+    [OutputType(typeof(int))]
     public class GetDataQueryResult : PSCmdlet
     {
         static public int RecordsAffected { get; set; }

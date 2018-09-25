@@ -16,6 +16,7 @@ namespace Horker.Data
     /// <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as string type. This does not matter because most database engines allow to apply arithmetic operations to string columns. If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet before exporting.</para>
     /// </summary>
     [Cmdlet("Export", "DataTable")]
+    [OutputType(typeof(void))]
     public class ExportDataTable : PSCmdlet
     {
         /// <summary>

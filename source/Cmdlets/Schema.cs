@@ -12,6 +12,7 @@ namespace Horker.Data
     /// <para type="description">The Get-DataSchema cmdlet gets database schema information that the database engine provides. If a schema collection name (-CollectionName) is not specified, it returns the information of all available schemas. The provided information varies among database products.</para>
     /// </summary>
     [Cmdlet("Get", "DataSchema")]
+    [OutputType(typeof(DataRow))]
     public class GetDataSchema : PSCmdlet
     {
         /// <summary>

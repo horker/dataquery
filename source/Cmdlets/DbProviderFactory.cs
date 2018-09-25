@@ -13,6 +13,7 @@ namespace Horker.Data
     /// <para type="description">The Register-DbProviderFactory cmdlet registers a database provider factory to the ConfigurationManager.</para>
     /// </summary>
     [Cmdlet("Register", "DbProviderFactory")]
+    [OutputType(typeof(void))]
     public class RegisterDbProviderFactory : PSCmdlet
     {
         /// <summary>
@@ -73,6 +74,7 @@ namespace Horker.Data
     /// <para type="description">The Unregister-DbProviderFactory cmdlet removes a database provider factory from the ConfigurationManager.</para>
     /// </summary>
     [Cmdlet("Unregister", "DbProviderFactory")]
+    [OutputType(typeof(void))]
     public class UnregisterDbProviderFactory : PSCmdlet
     {
         /// <summary>
@@ -130,6 +132,7 @@ namespace Horker.Data
     /// <para type="description">If the -ProviderName parameter is not specified, it returns all database provider factories.</para>
     /// </summary>
     [Cmdlet("Get", "DbProviderFactory")]
+    [OutputType(typeof(DataTable))]
     public class GetDbProviderFactory : PSCmdlet
     {
         /// <summary>

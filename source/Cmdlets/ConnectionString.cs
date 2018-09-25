@@ -15,6 +15,7 @@ namespace Horker.Data
     /// <para type="description">The Register-DataConnectionString cmdlet registers a connection string to the ConfigurationManager.</para>
     /// </summary>
     [Cmdlet("Register", "DataConnectionString")]
+    [OutputType(typeof(void))]
     public class RegisterDataConnectionString : PSCmdlet
     {
         /// <summary>
@@ -78,6 +79,7 @@ namespace Horker.Data
     /// <para type="description">The Unregister-DataConnectionString cmdlet removes a connection string definition from the ConfigurationManager.</para>
     /// </summary>
     [Cmdlet("Unregister", "DataConnectionString")]
+    [OutputType(typeof(void))]
     public class UnregisterDataConnectionString : PSCmdlet
     {
         /// <summary>
@@ -138,6 +140,7 @@ namespace Horker.Data
     /// <para type="description">The Get-DataConnectionString cmdlet gets connection strings defined in the ConfigurationManager.</para>
     /// </summary>
     [Cmdlet("Get", "DataConnectionString")]
+    [OutputType(typeof(ConnectionStringSettings))]
     public class GetDataConnectionString : PSCmdlet
     {
         protected override void EndProcessing()
@@ -152,6 +155,7 @@ namespace Horker.Data
     /// <para type="description">When the -TestConnection parameter is specified, the cmdlet tries to connect to a database with the newly created connection string.</para>
     /// </summary>
     [Cmdlet("New", "DataConnectionString")]
+    [OutputType(typeof(string))]
     public class NewDataConnectionString : PSCmdlet
     {
         /// <summary>

@@ -13,6 +13,8 @@ namespace Horker.Data
     /// <para type="description">The New-DataConnection cmdlet opens a database connection.</para>
     /// </summary>
     [Cmdlet("New", "DataConnection", DefaultParameterSetName = "FileOrName")]
+    [Alias("Open", "DataConnection")]
+    [OutputType(typeof(DbConnection))]
     public class NewDataConnection : PSCmdlet
     {
         /// <summary>
@@ -51,6 +53,7 @@ namespace Horker.Data
     /// <para type="description">The Close-DataConnection cmdlet closes a database connection.</para>
     /// </summary>
     [Cmdlet("Close", "DataConnection")]
+    [OutputType(typeof(void))]
     public class CloseDataConnection : PSCmdlet
     {
         /// <summary>
@@ -77,6 +80,7 @@ namespace Horker.Data
     /// <para type="description">This cmdlet is useful when you need to investigate untracked open connections causing a trouble (acquiring a file lock, for example).</para>
     /// </summary>
     [Cmdlet("Get", "DataConnectionHistory")]
+    [OutputType(typeof(DbConnection))]
     public class GetDataConnectionHistory : PSCmdlet
     {
         private static List<DbConnection> _connectionHistory = new List<DbConnection>();

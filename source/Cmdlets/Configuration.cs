@@ -11,6 +11,7 @@ namespace Horker.Data
     /// <para type="description">The Register-DataConfiguration cmdlet reads a configuration file (app.config or web.config in most cases), finds the /configuration/connectionStrings and /configuration/system.data/DbProviderFactories sections and, according to their contents, registers connection strings and database provider factories to the ConfigurationManager.</para>
     /// </summary>
     [Cmdlet("Register", "DataConfiguration")]
+    [OutputType(typeof(void))]
     public class RegisterDataConfiguration : PSCmdlet
     {
         /// <summary>
