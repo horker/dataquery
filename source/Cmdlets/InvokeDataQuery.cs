@@ -3,6 +3,7 @@ using System.Collections;
 using System.Management.Automation;
 using System.Data;
 using System.Data.Common;
+using System.Collections.Generic;
 
 #pragma warning disable CS1591
 
@@ -156,8 +157,18 @@ namespace Horker.Data
                             var count = reader.FieldCount;
 
                             string[] fieldNames = new string[count];
+                            var nameHash = new HashSet<string>();
                             for (int i = 0; i < count; ++i)
-                                fieldNames[i] = reader.GetName(i);
+                            {
+                                var name = reader.GetName(i);
+
+                                var suffix = 1;
+                                while (nameHash.Contains(name))
+                                    name = reader.GetName(i) + suffix++;
+
+                                fieldNames[i] = name;
+                                nameHash.Add(name);
+                            }
 
                             while (reader.Read())
                             {
