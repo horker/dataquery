@@ -64,8 +64,8 @@ task Build {
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\Horker.Data.dll" $MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\Horker.Data.pdb" $DEBUG_MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Release\System.Data.SQLite.dll" $MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\x64\*" "$MODULE_PATH\x64"
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\x86\*" "$MODULE_PATH\x86"
+    Copy-ItemSkip "$SOURCE_PATH\bin\Release\x64\*" "$MODULE_PATH\x64\"
+    Copy-ItemSkip "$SOURCE_PATH\bin\Release\x86\*" "$MODULE_PATH\x86\"
 
     New-FolderSkip "$DEBUG_MODULE_PATH\x64"
     New-FolderSkip "$DEBUG_MODULE_PATH\x86"
@@ -74,8 +74,8 @@ task Build {
     Copy-ItemSkip "$SOURCE_PATH\bin\Debug\Horker.Data.dll" $DEBUG_MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Debug\Horker.Data.pdb" $DEBUG_MODULE_PATH
     Copy-ItemSkip "$SOURCE_PATH\bin\Debug\System.Data.SQLite.dll" $DEBUG_MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\x64\*" "$DEBUG_MODULE_PATH\x64"
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\x86\*" "$DEBUG_MODULE_PATH\x86"
+    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\x64\*" "$DEBUG_MODULE_PATH\x64\"
+    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\x86\*" "$DEBUG_MODULE_PATH\x86\"
   }
 }
 
