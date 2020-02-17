@@ -13,7 +13,7 @@ namespace Horker.Data
     /// <para type="synopsis">Inserts objects into a database table.</para>
     /// <para type="description">The Export-DataTable cmdlet inserts objects from the pipeline into a database table specified by the -TableName parameter.</para>
     /// <para type="description">The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.</para>
-    /// <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as string type. This does not matter because most database engines allow to apply arithmetic operations to string columns. If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet before exporting.</para>
+    /// <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as a string type. (This does not matter for SQLite because it allows to apply arithmetic operations to string columns.) If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet beforehand.</para>
     /// </summary>
     [Cmdlet("Export", "DataTable")]
     [OutputType(typeof(void))]
