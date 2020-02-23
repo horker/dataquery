@@ -55,6 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\Helpers.cs" />
+    <Compile Include="Cmdlets\CopyDataRow.cs" />
     <Compile Include="Cmdlets\Configuration.cs" />
     <Compile Include="Classes\ConnectionOpener.cs" />
     <Compile Include="Cmdlets\DbProviderFactory.cs" />

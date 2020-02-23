@@ -38,7 +38,7 @@ namespace Horker.Data
         protected override void EndProcessing()
         {
             try {
-                var opener = new ConnectionOpener(FileOrName, null, ProviderName, ConnectionString);
+                var opener = new ConnectionSpecifier(FileOrName, null, ProviderName, ConnectionString);
 
                 WriteObject(opener.Connection);
             }

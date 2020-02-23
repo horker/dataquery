@@ -4,12 +4,12 @@
 
 namespace Horker.Data
 {
-    class ConnectionOpener
+    public class ConnectionSpecifier
     {
         public DbConnection Connection { get; private set; }
         public bool ConnectionOpened { get; private set; }
 
-        public ConnectionOpener(string fileOrName, DbConnection connection, string providerName, string connectionString)
+        public ConnectionSpecifier(string fileOrName, DbConnection connection, string providerName, string connectionString)
         {
             if (fileOrName != null) {
                 Connection = new FileConnectionSetting(fileOrName).GetConnection();
@@ -27,6 +27,23 @@ namespace Horker.Data
             if (ConnectionOpened) {
                 GetDataConnectionHistory.AddToHistory(Connection);
             }
+        }
+
+        public void Close()
+        {
+            if (ConnectionOpened && Connection != null)
+                Connection.Close();
+            ConnectionOpened = false;
+        }
+
+        public static implicit operator ConnectionSpecifier(string fileOrName)
+        {
+            return new ConnectionSpecifier(fileOrName, null, null, null);
+        }
+
+        public static implicit operator ConnectionSpecifier(DbConnection connection)
+        {
+            return new ConnectionSpecifier(null, connection, null, null);
         }
     }
 }

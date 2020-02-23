@@ -76,7 +76,7 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            var opener = new ConnectionOpener(FileOrName, Connection, null, null);
+            var opener = new ConnectionSpecifier(FileOrName, Connection, null, null);
             var connection = opener.Connection;
             bool connectionOpened = opener.ConnectionOpened;
 

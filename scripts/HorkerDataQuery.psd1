@@ -91,8 +91,8 @@ FunctionsToExport = @()
 CmdletsToExport = @(
   "Invoke-DataQuery"
   "Get-DataQueryResult"
-
   "Export-DataTable"
+  "Copy-DataRow"
 
   "New-DataConnection"
   "Close-DataConnection"

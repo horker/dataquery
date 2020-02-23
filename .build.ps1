@@ -86,6 +86,7 @@ task BuildHelp `
   . $HELPGEN $HELP_INPUT
 
   Copy-Item $HELP_INTERM $MODULE_PATH
+  Copy-Item $HELP_INTERM $DEBUG_MODULE_PATH
 }
 
 task Test {
