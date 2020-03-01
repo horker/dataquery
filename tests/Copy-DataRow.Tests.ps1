@@ -45,13 +45,13 @@ Describe "Copy-DataRow" {
 
         Invoke-DataQuery $conn2 "create table U (x, y)"
 
-        Copy-DataRow $conn1 "select a, c from T where a >= 2" $conn2 "U"
+        Copy-DataRow $conn1 "select a as y, c as x from T where a >= 2" $conn2 "U"
 
         $result = Invoke-DataQuery $conn2 "select * from U"
 
-        $result[0].x | Should -Be 2
-        $result[0].y | Should -Be "yyy"
-        $result[1].x | Should -Be 3
-        $result[1].y | Should -Be "mmm"
+        $result[0].x | Should -Be "yyy"
+        $result[0].y | Should -Be 2
+        $result[1].x | Should -Be "mmm"
+        $result[1].y | Should -Be 3
     }
 }

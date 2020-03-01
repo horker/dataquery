@@ -50,5 +50,29 @@ namespace Horker.Data.Classes
             else
                 throw new ArgumentException("Query parameters must be a IDictionary or an IEnumerable");
         }
+
+        public static DbProviderFactory GetDbProviderFactory(DbConnection connection)
+        {
+            DbProviderFactory factory = null;
+
+            // ODBC and OLEDB Access connections fail to obtain the corresponding factories.
+            if (connection is System.Data.Odbc.OdbcConnection)
+            {
+                factory = DbProviderFactories.GetFactory("System.Data.Odbc");
+            }
+            else if (connection is System.Data.OleDb.OleDbConnection)
+            {
+                factory = DbProviderFactories.GetFactory("System.Data.OleDb");
+            }
+            else
+            {
+                factory = DbProviderFactories.GetFactory(connection);
+            }
+
+            if (factory == null)
+                throw new RuntimeException("Failed to obtain a DbProviderFactory object");
+
+            return factory;
+        }
     }
 }

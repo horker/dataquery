@@ -67,12 +67,17 @@ namespace Horker.Data.Cmdlets
 
         protected override void BeginProcessing()
         {
+            DbTransaction transaction = null;
             try
             {
                 if ((TargetTable == null && TargetSql == null) || (TargetTable != null && TargetSql != null))
                     throw new ArgumentException("Specify either one of TargetTable or TargetSql");
 
                 bool timeoutGiven = MyInvocation.BoundParameters.ContainsKey("Timeout");
+
+                var connection = TargetConnection.Connection;
+
+                transaction = connection.BeginTransaction();
 
                 using (var selectCmd = SourceConnection.Connection.CreateCommand())
                 {
@@ -86,6 +91,7 @@ namespace Horker.Data.Cmdlets
                     using (var reader = selectCmd.ExecuteReader())
                     {
                         string[] paramNames = null;
+
                         while (reader.Read())
                         {
                             if (paramNames == null)
@@ -97,41 +103,45 @@ namespace Horker.Data.Cmdlets
 
                             using (var insertCmd = TargetConnection.Connection.CreateCommand())
                             {
+                                insertCmd.Transaction = transaction;
+
+                                if (TargetSql == null)
+                                {
+                                    var factory = Helpers.GetDbProviderFactory(connection);
+                                    using (var builder = factory.CreateCommandBuilder())
+                                    {
+                                        var columns = string.Join(", ", paramNames.Select(p => builder.QuoteIdentifier(p)));
+                                        var paras = "@" + string.Join(", @", paramNames);
+                                        TargetSql = $"insert into {TargetTable} ({columns}) values ({paras})";
+                                    }
+                                }
+
+                                insertCmd.CommandText = TargetSql;
+
+                                for (var i = 0; i < reader.FieldCount; ++i)
+                                {
+                                    var param = insertCmd.CreateParameter();
+                                    param.ParameterName = paramNames[i];
+                                    param.Value = reader.GetValue(i);
+                                    insertCmd.Parameters.Add(param);
+                                }
+
                                 if (timeoutGiven)
                                     insertCmd.CommandTimeout = Timeout;
-
-                                if (TargetTable != null)
-                                {
-                                    for (var i = 0; i < reader.FieldCount; ++i)
-                                    {
-                                        var param = insertCmd.CreateParameter();
-                                        param.ParameterName = paramNames[i];
-                                        param.Value = reader.GetValue(i);
-                                        insertCmd.Parameters.Add(param);
-                                    }
-
-                                    insertCmd.CommandText = $"insert into {TargetTable} values (@{string.Join(", @", paramNames)})";
-                                }
-                                else
-                                {
-                                    insertCmd.CommandText = TargetSql;
-                                    for (var i = 0; i < reader.FieldCount; ++i)
-                                    {
-                                        var param = insertCmd.CreateParameter();
-                                        param.ParameterName = paramNames[i];
-                                        param.Value = reader.GetValue(i);
-                                        insertCmd.Parameters.Add(param);
-                                    }
-                                }
 
                                 insertCmd.ExecuteNonQuery();
                             }
                         }
                     }
                 }
+
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                if (transaction != null)
+                    transaction.Rollback();
+
                 WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
             }
             finally
