@@ -55,7 +55,7 @@ namespace Horker.Data.Classes
         {
             DbProviderFactory factory = null;
 
-            // ODBC and OLEDB Access connections fail to obtain the corresponding factories.
+            // ODBC, OLEDB and SQLite connections fail to obtain the corresponding factories.
             if (connection is System.Data.Odbc.OdbcConnection)
             {
                 factory = DbProviderFactories.GetFactory("System.Data.Odbc");
@@ -63,6 +63,10 @@ namespace Horker.Data.Classes
             else if (connection is System.Data.OleDb.OleDbConnection)
             {
                 factory = DbProviderFactories.GetFactory("System.Data.OleDb");
+            }
+            else if (connection is System.Data.SQLite.SQLiteConnection)
+            {
+                factory = DbProviderFactories.GetFactory("System.Data.SQLite");
             }
             else
             {

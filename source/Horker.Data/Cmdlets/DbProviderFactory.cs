@@ -56,6 +56,13 @@ namespace Horker.Data
         {
             using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
             {
+                if (dataSet == null)
+                {
+                    // .NET Core
+                    DbProviderFactories.RegisterFactory(invariant, type);
+                    return;
+                }
+
                 var rows = dataSet.Tables[0].Rows;
 
                 foreach (DataRow r in rows)
@@ -99,6 +106,13 @@ namespace Horker.Data
         {
             using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
             {
+                if (dataSet == null)
+                {
+                    // .NET Core
+                    DbProviderFactories.UnregisterFactory(invariant);
+                    return;
+                }
+
                 var rows = dataSet.Tables[0].Rows;
 
                 foreach (DataRow r in rows)
@@ -118,6 +132,14 @@ namespace Horker.Data
         {
             using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
             {
+                if (dataSet == null)
+                {
+                    // .NET Core
+                    foreach (var n in DbProviderFactories.GetProviderInvariantNames())
+                        DbProviderFactories.UnregisterFactory(n);
+                    return;
+                }
+
                 var rows = dataSet.Tables[0].Rows;
 
                 while (rows.Count > 0)

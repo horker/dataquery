@@ -430,10 +430,10 @@ namespace Horker.Data
                     {
                         foreach (DataRow row in schema.Rows)
                         {
-                            var columnName = row.Field<string>("TypeName");
+                            var columnName = (string)row["TypeName"];
                             if (columnName == "varchar" || columnName == "VARCHAR" || columnName == "Varchar")
                             {
-                                long l = row.Field<long>("ColumnSize");
+                                long l = (long)row["ColumnSize"];
                                 length = Math.Min(4000, l);
                                 break;
                             }

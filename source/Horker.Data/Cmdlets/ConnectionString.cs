@@ -58,14 +58,20 @@ namespace Horker.Data
 
             var collection = ConfigurationManager.ConnectionStrings;
 
-            var elementReadOnlyField = typeof(ConfigurationElement).
-                GetField("_bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+            var elementReadOnlyField =
+                // .NET Framework
+                typeof(ConfigurationElementCollection).GetField("_bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic) ??
+                // .NET Core
+                typeof(ConfigurationElementCollection).GetField("_readOnly", BindingFlags.Instance | BindingFlags.NonPublic);
             elementReadOnlyField.SetValue(collection, false);
 
-            var collectionReadOnlyField = typeof(ConfigurationElementCollection).
-                GetField("bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
-            collectionReadOnlyField.SetValue(collection, false);
+            var collectionReadOnlyField =
+                // .NET Framework
+                typeof(ConfigurationElementCollection).GetField("bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic) ??
+                // .NET Core
+                typeof(ConfigurationElementCollection).GetField("_readOnly", BindingFlags.Instance | BindingFlags.NonPublic);
 
+            collectionReadOnlyField.SetValue(collection, false);
 
             collection.Add(new ConnectionStringSettings(name, connectionString, providerName));
 

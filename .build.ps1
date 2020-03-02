@@ -1,4 +1,4 @@
-task . Compile, Build, BuildHelp, ImportDebug, Test
+task . Compile, Build, ImportDebug, Test
 
 Set-StrictMode -Version 4
 
@@ -7,97 +7,113 @@ Set-StrictMode -Version 4
 $SOURCE_PATH = "$PSScriptRoot\source"
 $SCRIPT_PATH = "$PSScriptRoot\scripts"
 
-$MODULE_PATH = "$PSScriptRoot\HorkerDataQuery"
-$DEBUG_MODULE_PATH = "$PSScriptRoot\debug\HorkerDataQuery"
+$DLL_PATH = "$SOURCE_PATH\Horker.Data.Tests\bin\{0}\netcoreapp3.1"
 
-$HELP_INPUT =  "$SOURCE_PATH\bin\Release\Horker.Data.dll"
-$HELP_INTERM = "$SOURCE_PATH\bin\Release\Horker.Data.dll-Help.xml"
-$HELP_OUTPUT = "$MODULE_PATH\Horker.Data.dll-Help.xml"
+$MODULE_PATH = "$PSScriptRoot\module\{0}\HorkerDataQuery"
 
-$HELPGEN = "$PSScriptRoot\vendor\XmlDoc2CmdletDoc.0.2.10\tools\XmlDoc2CmdletDoc.exe"
+$HELP_INPUT =  "$SOURCE_PATH\Horker.Data.Tests\bin\Release\netcoreapp3.1\Horker.Data.dll"
+$HELP_INTERM = "$SOURCE_PATH\Horker.Data.Tests\bin\Release\netcoreapp3.1\Horker.Data.dll-Help.xml"
+$HELP_OUTPUT = "$MODULE_PATH\Horker.Data.dll-Help.xml" -f "Release"
+
+$HELPGEN = "$PSScriptRoot\vendor\XmlDoc2CmdletDoc.0.2.13\tools\XmlDoc2CmdletDoc.exe"
+
+$OBJECT_FILES = @(
+    "Horker.Data.dll"
+    "Horker.Data.pdb"
+    "System.Data.Odbc.dll"
+    "System.Data.OleDb.dll"
+    "System.Data.SqlClient.dll"
+    "System.Data.SQLite.dll"
+    "Npgsql.dll"
+)
+
+$NATIVE_PATH = "$PSScriptRoot\vendor\System.Data.SQLite.Core.1.0.112.0\runtimes\win-x64\native\netstandard2.0"
 
 ############################################################
 
 function New-FolderSkip {
-  param(
-    [string]$Path
-  )
+    param(
+        [string]$Path
+    )
 
-  try {
-    $null = New-Item -Type Directory $Path -EA Stop
-  }
-  catch {
-    Write-Host -ForegroundColor DarkCyan $_
-  }
+    try {
+        $null = New-Item -Type Directory $Path -EA Stop
+        Write-Host -ForegroundColor DarkCyan $Path
+    }
+    catch {
+        Write-Host -ForegroundColor DarkYellow $_
+    }
 }
 
 function Copy-ItemSkip {
-  param(
-    [string]$Source,
-    [string]$Dest
-  )
+    param(
+        [string]$Source,
+        [string]$Dest
+    )
 
-  try {
-    Copy-Item $Source $Dest
-  }
-  catch {
-    Write-Host -ForegroundColor DarkCyan $_
-  }
+    try {
+        Copy-Item $Source $Dest
+        Write-Host -ForegroundColor DarkCyan "$Source => $Dest"
+    }
+    catch {
+        Write-Host -ForegroundColor DarkYellow $_
+    }
 }
 
 ############################################################
 
 task Compile {
-  msbuild "$SOURCE_PATH\dataquery.sln" /p:Configuration=Debug /nologo /v:quiet
-  msbuild "$SOURCE_PATH\dataquery.sln" /p:Configuration=Release /nologo /v:quiet
+    dotnet build "$SOURCE_PATH\dataquery.sln" -c Debug -nologo -v minimal
+    dotnet build "$SOURCE_PATH\dataquery.sln" -c Release -nologo -v minimal
 }
 
 task Build {
 
-  . {
-    $ErrorActionPreference = "Continue"
+    . {
+        $ErrorActionPreference = "Continue"
 
-    New-FolderSkip "$MODULE_PATH\x64"
-    New-FolderSkip "$MODULE_PATH\x86"
+        "Release", "Debug" | foreach {
+            $modulePath = $MODULE_PATH -f $_
+            $dllPath = $DLL_PATH -f "Release"
 
-    Copy-ItemSkip "$SCRIPT_PATH\*" $MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\Horker.Data.dll" $MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\Horker.Data.pdb" $DEBUG_MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\System.Data.SQLite.dll" $MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\x64\*" "$MODULE_PATH\x64\"
-    Copy-ItemSkip "$SOURCE_PATH\bin\Release\x86\*" "$MODULE_PATH\x86\"
+            New-FolderSkip "$modulePath\x64"
 
-    New-FolderSkip "$DEBUG_MODULE_PATH\x64"
-    New-FolderSkip "$DEBUG_MODULE_PATH\x86"
+            Copy-ItemSkip "$SCRIPT_PATH\*" $modulePath
 
-    Copy-ItemSkip "$SCRIPT_PATH\*" $DEBUG_MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\Horker.Data.dll" $DEBUG_MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\Horker.Data.pdb" $DEBUG_MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\System.Data.SQLite.dll" $DEBUG_MODULE_PATH
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\x64\*" "$DEBUG_MODULE_PATH\x64\"
-    Copy-ItemSkip "$SOURCE_PATH\bin\Debug\x86\*" "$DEBUG_MODULE_PATH\x86\"
-  }
+            foreach ($f in $OBJECT_FILES) {
+                Copy-ItemSkip "$dllPath\$f" $modulePath
+            }
+
+            Copy-ItemSkip "$NATIVE_PATH\*" "$modulePath\x64\"
+        }
+    }
 }
 
 task BuildHelp `
-  -Inputs $HELP_INPUT `
-  -Outputs $HELP_OUTPUT `
+    -Inputs $HELP_INPUT `
+    -Outputs $HELP_OUTPUT `
 {
-  . $HELPGEN $HELP_INPUT
+    $xmlFile = "$SOURCE_PATH\Horker.Data\bin\Release\netcoreapp2.1\Horker.Data.xml"
+    Copy-Item $xmlFile (Split-Path -Parent $HELP_INPUT)
+    . $HELPGEN $HELP_INPUT
 
-  Copy-Item $HELP_INTERM $MODULE_PATH
-  Copy-Item $HELP_INTERM $DEBUG_MODULE_PATH
+    "Release", "Debug" | foreach {
+        $modulePath = $MODULE_PATH -f $_
+        Copy-Item $HELP_INTERM $modulePath
+    }
 }
 
 task Test {
-  Invoke-Pester "$PSScriptRoot\tests"
+    Invoke-Pester "$PSScriptRoot\tests"
 }
 
 task ImportDebug {
-  Import-Module $DEBUG_MODULE_PATH -Force
+    Import-Module ($MODULE_PATH -f "Debug") -Force
 }
 
 task Clean {
-  Remove-Item "$MODULE_PATH\*" -Force -Recurse -EA Continue
-  Remove-Item "$DEBUG_MODULE_PATH\*" -Force -Recurse -EA Continue
+    "Release", "Debug" | foreach {
+        $modulePath = $MODULE_PATH -f $_
+        Remove-Item "$modulePath\*" -Force -Recurse -EA Continue
+    }
 }

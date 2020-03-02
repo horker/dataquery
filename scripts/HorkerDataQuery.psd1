@@ -12,10 +12,10 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.5'
+ModuleVersion = '2.0.0'
 
 # Supported PSEditions
-# CompatiblePSEditions = ''
+CompatiblePSEditions = 'Core'
 
 # ID used to uniquely identify this module
 GUID = 'fb732285-38d2-40da-93d1-be7cde81ddf7'
@@ -27,18 +27,18 @@ Author = 'horker'
 CompanyName = ''
 
 # Copyright statement for this module
-Copyright = '(c) 2018 horker. All rights reserved.'
+Copyright = '(c) 2018-2020 horker. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = "Horker DataQuery is a database query utility based on ADO.NET.
+Description = "Horker DataQuery is a database query utility based on System.Data classes of .NET Core.
 
 The main features are:
 - Written in C# so that it works fast for large data
-- Supports every database product that provides the ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB and ODBC
+- Supports every database library that implements the System.Data interface, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB and ODBC
 - PowerShell interoperatability; gets query results as PowerShell objects and exports PowerShell objects into database tables
 - Reads app.config or web.config in your app to define database providers and connection strings
 - Gets information from the database schema
-- Provides the built-in SQLite driver
+- Provides the built-in ODBC, OLEDB and SQLite drivers
 
 This module would be helpful for software development, data analysis, and various data manipulation tasks.
 
@@ -54,7 +54,7 @@ For more details, see the project site: https://github.com/horker/dataquery"
 # PowerShellHostVersion = ''
 
 # Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-DotNetFrameworkVersion = '4.5'
+#DotNetFrameworkVersion = '4.5'
 
 # Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
 # CLRVersion = ''
@@ -67,7 +67,11 @@ DotNetFrameworkVersion = '4.5'
 
 # Assemblies that must be loaded prior to importing this module
 RequiredAssemblies = @(
+  "System.Data.Odbc.dll"
+  "System.Data.OleDb.dll"
+  "System.Data.SqlClient.dll"
   "System.Data.SQLite.dll"
+  "Npgsql.dll"
 )
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
@@ -154,8 +158,12 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
+v2.0.0
+- Move to .NET Core and PowerShell Core
+- Define Copy-DataRow
+
 v1.0.5
-- Earlier release of native resources (database connections)
+- Releasing native resources (database connections) in more timely manner
 - Improvements of data handling in Export-DataTable
 - Query results as System.Data.DataTable
 - Several improvements and bug fixes

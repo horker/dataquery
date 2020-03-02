@@ -1,0 +1,329 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Horker.Data</name>
+    </assembly>
+    <members>
+        <member name="T:Horker.Data.RegisterDataConfiguration">
+            <summary>
+            <para type="synopsis">Registers connection strings and database provider factories.</para>
+            <para type="description">The Register-DataConfiguration cmdlet reads a configuration file (app.config or web.config in most cases), finds the /configuration/connectionStrings and /configuration/system.data/DbProviderFactories sections and, according to their contents, registers connection strings and database provider factories to the ConfigurationManager.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDataConfiguration.ConfigurationFile">
+            <summary>
+            <para type="description">A configuration file name.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.NewDataConnection">
+            <summary>
+            <para type="synopsis">Opens a database connection.</para>
+            <para type="description">The New-DataConnection cmdlet opens a database connection.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataConnection.FileOrName">
+            <summary>
+            <para type="description">A database file name or a connection string name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataConnection.ProviderName">
+            <summary>
+            <para type="description">A database provider name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataConnection.ConnectionString">
+            <summary>
+            <para type="description">A connection string.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.CloseDataConnection">
+            <summary>
+            <para type="synopsis">Closes a database connection.</para>
+            <para type="description">The Close-DataConnection cmdlet closes a database connection.</para>
+            </summary>
+        </member>
+        <member name="F:Horker.Data.CloseDataConnection.Connection">
+            <summary>
+            <para type="description">A database connection.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.GetDataConnectionHistory">
+            <summary>
+            <para type="synopsis">Gets open database connections in the current session.</para>
+            <para type="description">The Get-DataConnectionHistory cmdlet gets open database connections in the current session that you have opened explicitly by the New-DataConnection cmdlet,  or implicitly by the other cmdlets you invoked.</para>
+            <para type="description">This cmdlet is useful when you need to investigate untracked open connections causing a trouble (acquiring a file lock, for example).</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.RegisterDataConnectionString">
+            <summary>
+            <para type="synopsis">Registers a connection string to the ConfigurationManager.</para>
+            <para type="description">The Register-DataConnectionString cmdlet registers a connection string to the ConfigurationManager.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDataConnectionString.Name">
+            <summary>
+            <para type="description">A connection string name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDataConnectionString.ProviderName">
+            <summary>
+            <para type="description">A database provider name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDataConnectionString.ConnectionString">
+            <summary>
+            <para type="description">A connection string.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.UnregisterDataConnectionString">
+            <summary>
+            <para type="synopsis">Removes a connection string definition from the ConfigurationManager.</para>
+            <para type="description">The Unregister-DataConnectionString cmdlet removes a connection string definition from the ConfigurationManager.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.UnregisterDataConnectionString.Name">
+            <summary>
+            <para type="description">A connection string name.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.GetDataConnectionString">
+            <summary>
+            <para type="synopsis">Gets connection strings defined in the ConfigurationManager.</para>
+            <para type="description">The Get-DataConnectionString cmdlet gets connection strings defined in the ConfigurationManager.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.NewDataConnectionString">
+            <summary>
+            <para type="synopsis">Creates a connection string based on the given parameters.</para>
+            <para type="description">The New-DataConnectionString cmdlet creates a connection string based on parameters for a specific database provider.</para>
+            <para type="description">When the -TestConnection parameter is specified, the cmdlet tries to connect to a database with the newly created connection string.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataConnectionString.ProviderName">
+            <summary>
+            <para type="description">A database provider name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataConnectionString.Parameters">
+            <summary>
+            <para type="description">A set of parameters that should be included in a connection string.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataConnectionString.TestConnection">
+            <summary>
+            <para type="description">Makes the cmdlet to test connectivity of a generated connection string.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.Cmdlets.CopyDataRow">
+            <summary>
+            <para type="synopsis">Copy data from a database to another.</para>
+            <para type="description">The Copy-DataRow cmdlet obtains a dataset from a database specified by the -SourceConnection parameter by executing the -SourceSql statement and inserts them to a table of another database spceified bu the -TargetConnection parameter.</para>
+            <para type="description">When you specify a target table name by the -TargetTable parameter, the cmdlet assumes the specified table contains the same set of columns as the source dataset and inserts them into the corresponding columns.</para>
+            <para type="description">When you specify a SQL statement for copying by the -TargetSql parameter, the cmdlet executes it for each data row of the source dataset. The SQL statement should contain named parameters corresponding to the columns of the source dataset.</para>
+            <para type="description">You can specify either one of the -TargetTable or -TargetSql parameters.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.SourceConnection">
+            <summary>
+            <para type="description">A DbConnection object, a connection string name or a database file name (SQLite or Access) of the source database.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.SourceSql">
+            <summary>
+            <para type="description">An SQL statement to obtain data from the source database.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.TargetConnection">
+            <summary>
+            <para type="description">A DbConnection object, a connection string name or a database file name (SQLite or Access) of the target database.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.TargetTable">
+            <summary>
+            <para type="description">A name of the table into which data will be inserted.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.SourceParameters">
+            <summary>
+            <para type="description">Query parameters applied to the -SourceSql statement.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.TargetSql">
+            <summary>
+            <para type="description">An SQL statement to be used for copying the data. It is usually an INSERT or UPDATE statement with the corresponding named parameters to the columns of the source dataset.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.Cmdlets.CopyDataRow.Timeout">
+            <summary>
+            <para type="description">A timeout in seconds.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.RegisterDbProviderFactory">
+            <summary>
+            <para type="synopsis">Registers a database provider factory to the ConfigurationManager.</para>
+            <para type="description">The Register-DbProviderFactory cmdlet registers a database provider factory to the ConfigurationManager.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDbProviderFactory.Name">
+            <summary>
+            <para type="description">A database provider name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDbProviderFactory.Invariant">
+            <summary>
+            <para type="description">An invariant name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDbProviderFactory.Description">
+            <summary>
+            <para type="description">A human readable description.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.RegisterDbProviderFactory.Type">
+            <summary>
+            <para type="description">Factory classes specification.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.UnregisterDbProviderFactory">
+            <summary>
+            <para type="synopsis">Removes a database provider factory from the ConfigurationManager.</para>
+            <para type="description">The Unregister-DbProviderFactory cmdlet removes a database provider factory from the ConfigurationManager.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.UnregisterDbProviderFactory.ProviderName">
+            <summary>
+            <para type="description">A database provider name.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.GetDbProviderFactory">
+            <summary>
+            <para type="synopsis">Gets database provider factories defined in the ConfigurationManager.</para>
+            <para type="description">The Get-DbProviderFactory cmdlet gets database provider factories defined in the ConfigurationManager.</para>
+            <para type="description">If the -ProviderName parameter is not specified, it returns all database provider factories.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.GetDbProviderFactory.ProviderName">
+            <summary>
+            <para type="description">A database provider name.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.ExportDataTable">
+            <summary>
+            <para type="synopsis">Inserts objects into a database table.</para>
+            <para type="description">The Export-DataTable cmdlet inserts objects from the pipeline into a database table specified by the -TableName parameter.</para>
+            <para type="description">The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.</para>
+            <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as a string type. (This does not matter for SQLite because it allows to apply arithmetic operations to string columns.) If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet beforehand.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.ExportDataTable.InputObject">
+            <summary>
+            <para type="description">Objects to be inserted into a database table.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.ExportDataTable.FileOrName">
+            <summary>
+            <para type="description">A database file name or a connection string name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.ExportDataTable.Connection">
+            <summary>
+            <para type="description">A database connection.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.ExportDataTable.TableName">
+            <summary>
+            <para type="description">A table name into which objects will be inserted. The value is embeded without being quoted into SQL statements that the cmdlet generates internally.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.ExportDataTable.AdditionalColumns">
+            <summary>
+            <para type="description">Additional column names.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.ExportDataTable.TypeName">
+            <summary>
+            <para type="description">A type of columns of a newly created table. By default, it is one of 'varchar' (general databases), 'nvarchar' (SQL Server), 'varchar2' (Oracle), or an empty string (SQLite).</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.InvokeDataQuery">
+            <summary>
+            <para type="synopsis">Executes a database query.</para>
+            <para type="description">The Invoke-DataQuery cmdlet executes a query to a database.</para>
+            <para type="description">Despite its name, this cmdlet can execute any SQL statement, including INSERT, DELETE and CREATE. When such a statement is executed, no result will return. By specifying the -ShowRecordsAffected parameter, you can get the number of records affected by the statement. You can always obtain the same value by the Get-DataQueryResult cmdlet.</para>
+            <para type="description">By default, the DBNull values in the result data set are replaced with normal null values, and the results are returned as a stream of PSObject values. You can change this behavior by the -PreserveDbNull and -AsDataRows switch parameters.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.FileOrName">
+            <summary>
+            <para type="description">A database file name or a connection string name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.Connection">
+            <summary>
+            <para type="description">A database connection.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.Query">
+            <summary>
+            <para type="description">A query statement.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.Parameters">
+            <summary>
+            <para type="description">Query parameters.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.Timeout">
+            <summary>
+            <para type="description">A query timeout in seconds.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.ShowRecordsAffected">
+            <summary>
+            <para type="description">Specifies whether the number of records affected by the query should be returned.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.PreserveDbNull">
+            <summary>
+            <para type="description">Stops replacing the DBNull values in the results with normal null values.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.AsDataRow">
+            <summary>
+            <para type="description">Indicates to return the result data set as System.Data.DataRow instead of PSObject.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.InvokeDataQuery.AsDataTable">
+            <summary>
+            <para type="description">Indicates to return the result data set as System.Data.DataTable instead of an array of PSObjects.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.GetDataQueryResult">
+            <summary>
+            <para type="synopsis">Gets a result of the last query statement.</para>
+            <para type="description">Gets the number of records affected by the last statement by the Invoke-DataQuery cmdlet. If the previous statement is SELECT, the cmdlet will return -1.</para>
+            </summary>
+        </member>
+        <member name="T:Horker.Data.GetDataSchema">
+            <summary>
+            <para type="synopsis">Gets database schema information.</para>
+            <para type="description">The Get-DataSchema cmdlet gets database schema information that the database engine provides. If a schema collection name (-CollectionName) is not specified, it returns the information of all available schemas. The provided information varies among database products.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.GetDataSchema.FileOrName">
+            <summary>
+            <para type="description">A database file name or a connection string name.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.GetDataSchema.Connection">
+            <summary>
+            <para type="description">A database connection.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.GetDataSchema.CollectionName">
+            <summary>
+            <para type="description">A schama collection name.</para>
+            </summary>
+        </member>
+    </members>
+</doc>
