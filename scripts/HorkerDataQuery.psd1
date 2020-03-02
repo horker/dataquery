@@ -45,7 +45,7 @@ This module would be helpful for software development, data analysis, and variou
 For more details, see the project site: https://github.com/horker/dataquery"
 
 # Minimum version of the Windows PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '6.0'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
