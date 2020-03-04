@@ -89,18 +89,13 @@ task Build {
     }
 }
 
-task BuildHelp `
-    -Inputs $HELP_INPUT `
-    -Outputs $HELP_OUTPUT `
-{
-    $xmlFile = "$SOURCE_PATH\Horker.Data\bin\Release\netcoreapp2.1\Horker.Data.xml"
-    Copy-Item $xmlFile (Split-Path -Parent $HELP_INPUT)
-    . $HELPGEN $HELP_INPUT
-
-    "Release", "Debug" | foreach {
-        $modulePath = $MODULE_PATH -f $_
-        Copy-Item $HELP_INTERM $modulePath
-    }
+task UpdateHelp {
+    Update-MarkdownHelp HorkerDataQuery $PSScriptRoot\docs
+}
+task BuildHelp {
+    $outputFolder = "$PSScriptRoot\module\release\HorkerDataQuery\en-US"
+    New-ExternalHelp -Path $PSScriptRoot\docs -OutputPath $outputFolder
+    Copy-Item $outputFolder\* $PSScriptRoot\module\debug\HorkerDataQuery\en-US\
 }
 
 task Test {
