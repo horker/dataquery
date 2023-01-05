@@ -12,7 +12,7 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.0'
+ModuleVersion = '2.1.0'
 
 # Supported PSEditions
 CompatiblePSEditions = 'Core'
@@ -27,7 +27,7 @@ Author = 'horker'
 CompanyName = ''
 
 # Copyright statement for this module
-Copyright = '(c) 2018-2020 horker. All rights reserved.'
+Copyright = '(c) 2018-2023 horker. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = "Horker DataQuery is a database query utility based on System.Data classes of .NET Core.
@@ -158,6 +158,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
+v2.1.0
+- Bump SQLite library version to 1.0.117
+
 v2.0.0
 - Move to .NET Core and PowerShell Core
 - Define Copy-DataRow
