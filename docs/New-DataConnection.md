@@ -7,6 +7,10 @@ schema: 2.0.0
 
 # New-DataConnection
 
+To create a new, closed SQLite or DuckDB file, use [New-DataDatabase](New-DataDatabase.md).
+Unlike New-DataConnection, it rejects existing files unless Force is specified and
+returns no open connection. Existing connection-string creation remains supported.
+
 DuckDB is bundled on PowerShell 7.6.5+ / Windows x64 only. Use
 `New-DataConnection duckdb-memory` for a private memory database, or
 `New-DataConnection -ProviderName DuckDB.NET.Data -ConnectionString 'Data Source=analytics.duckdb'`

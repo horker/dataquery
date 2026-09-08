@@ -56,7 +56,7 @@ namespace Horker.Data
             {
                 DuckDbSupport.RequireSupportedHost();
                 if (!File.Exists(FileOrName))
-                    throw new RuntimeException("DuckDB file does not exist. Create it explicitly with New-DataConnection -ProviderName DuckDB.NET.Data -ConnectionString 'Data Source=filename.duckdb'.");
+                    throw new RuntimeException("DuckDB file does not exist. Use New-DataDatabase filename.duckdb, or New-DataConnection -ProviderName DuckDB.NET.Data -ConnectionString 'Data Source=filename.duckdb'.");
                 var builder = ProviderRegistry.GetFactory(DuckDbSupport.ProviderName).CreateConnectionStringBuilder();
                 builder["Data Source"] = FileOrName;
                 return new ProviderConnectionSetting(DuckDbSupport.ProviderName, builder.ConnectionString).GetConnection();
@@ -90,7 +90,7 @@ namespace Horker.Data
                 return conn;
             }
 
-            throw new RuntimeException(String.Format("'{0}' is not a database file name nor connection string name", FileOrName));
+            throw new RuntimeException(String.Format("'{0}' is not a database file name nor connection string name. Use New-DataDatabase to create a SQLite or DuckDB file.", FileOrName));
         }
     }
 }

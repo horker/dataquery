@@ -126,6 +126,28 @@ Provider references: [installation](https://duckdb.net/docs/getting-started.html
 
 ## Quick Walkthrough
 
+### Creating a Database File
+
+```powershell
+New-DataDatabase ./sample.db                   # SQLite
+New-DataDatabase ./analytics.duckdb            # DuckDB (PowerShell 7 only)
+New-DataDatabase ./database -DatabaseType SQLite
+$file = New-DataDatabase ./sample.db -Force -PassThru
+```
+
+The cmdlet creates an empty database and closes its connections. It normally returns
+no output; `-PassThru` returns `FileInfo`. Extensions `.db`, `.sqlite`, `.sqlite3`
+select SQLite and `.duckdb` selects DuckDB, case-insensitively. Other extensions
+require `-DatabaseType`. Conflicting types and recognized extensions are rejected.
+Paths are literal and relative to the PowerShell current location. The parent directory
+must exist; connection names and memory database specifications are not accepted.
+
+`-Force` replaces an existing file only after creating and verifying a temporary
+database. Close all connections first. Read-only files, reparse points, locked files,
+and targets with database sidecars are rejected. Concurrent database use is unsupported.
+`-WhatIf` and `-Confirm` are supported; `-Force` does not bypass confirmation.
+See [New-DataDatabase](docs/New-DataDatabase.md) for details.
+
 ### Getting Started with SQLite
 
 The module is shipped with the built-in SQLite provider so that you can use SQLite databases out of the box.
@@ -133,7 +155,7 @@ The module is shipped with the built-in SQLite provider so that you can use SQLi
 If you have no SQLite database files, create a new one:
 
 ```PowerShell
-PS> New-Item test.db
+PS> New-DataDatabase test.db
 ```
 
 Then you can access it by the `Invoke-DataQuery` cmdlet (or its alias `idq`).

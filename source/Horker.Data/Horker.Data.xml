@@ -309,6 +309,24 @@
             <para type="description">Gets the number of records affected by the last statement by the Invoke-DataQuery cmdlet. If the previous statement is SELECT, the cmdlet will return -1.</para>
             </summary>
         </member>
+        <member name="T:Horker.Data.NewDataDatabase">
+            <summary>
+            <para type="synopsis">Creates an empty SQLite or DuckDB database file.</para>
+            <para type="description">Infers SQLite from .db, .sqlite or .sqlite3, and DuckDB from .duckdb. Other extensions require DatabaseType. DuckDB requires PowerShell 7. The parent directory must exist. Force replaces a closed existing file after a new database has been created and verified. Sidecars, reparse points and read-only targets are rejected. Concurrent database use is unsupported. Connections are closed before returning; PassThru returns FileInfo.</para>
+            </summary>
+        </member>
+        <member name="P:Horker.Data.NewDataDatabase.Path">
+            <summary><para type="description">A literal filesystem path, relative to the PowerShell current location. Connection names and memory databases are not accepted.</para></summary>
+        </member>
+        <member name="P:Horker.Data.NewDataDatabase.DatabaseType">
+            <summary><para type="description">SQLite or DuckDB. Must agree with a recognized extension.</para></summary>
+        </member>
+        <member name="P:Horker.Data.NewDataDatabase.Force">
+            <summary><para type="description">Replace an existing file. Does not bypass locks, attributes or confirmation.</para></summary>
+        </member>
+        <member name="P:Horker.Data.NewDataDatabase.PassThru">
+            <summary><para type="description">Return the created file as FileInfo after closing database connections.</para></summary>
+        </member>
         <member name="T:Horker.Data.GetDataSchema">
             <summary>
             <para type="synopsis">Gets database schema information.</para>

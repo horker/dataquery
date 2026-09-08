@@ -91,6 +91,7 @@ CmdletsToExport = @(
   "Copy-DataRow"
 
   "New-DataConnection"
+  "New-DataDatabase"
   "Close-DataConnection"
   "Get-DataConnectionHistory"
 
@@ -151,6 +152,7 @@ PrivateData = @{
         # ReleaseNotes of this module
         ReleaseNotes = @"
 v3.0.0
+- Add New-DataDatabase to create empty SQLite or DuckDB files, with optional replacement and FileInfo output.
 - Support Windows PowerShell 5.1 on .NET Framework 4.8+ alongside PowerShell 7.6.5+ on .NET 10 (Windows x64 only).
 - Update dependencies, including SQLite 1.0.119 and Npgsql 10.0.3; isolate runtime-specific assemblies in one module package.
 - Bundle DuckDB.NET.Data.Full 1.5.5 on PowerShell 7 for queries, row copies, exports and schema inspection, with a duckdb-memory connection.
