@@ -157,14 +157,20 @@ namespace Horker.Data
                             var count = reader.FieldCount;
 
                             string[] fieldNames = new string[count];
-                            var nameHash = new HashSet<string>();
+                            // PowerShell properties are case-insensitive. Normalize unnamed
+                            // columns before checking collisions, including generated names.
+                            var nameHash = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                            var exprCount = 1;
                             for (int i = 0; i < count; ++i)
                             {
-                                var name = reader.GetName(i);
+                                var baseName = reader.GetName(i);
+                                if (string.IsNullOrEmpty(baseName))
+                                    baseName = "Expr" + exprCount++;
+                                var name = baseName;
 
                                 var suffix = 1;
                                 while (nameHash.Contains(name))
-                                    name = reader.GetName(i) + suffix++;
+                                    name = baseName + suffix++;
 
                                 fieldNames[i] = name;
                                 nameHash.Add(name);
@@ -173,24 +179,13 @@ namespace Horker.Data
                             while (reader.Read())
                             {
                                 var obj = new PSObject();
-                                var exprCount = 1;
                                 for (int i = 0; i < count; ++i)
                                 {
                                     object value = null;
                                     if (PreserveDbNull || !reader.IsDBNull(i))
                                         value = reader.GetValue(i);
 
-                                    PSNoteProperty prop;
-                                    try
-                                    {
-                                        prop = new PSNoteProperty(fieldNames[i], value);
-                                    }
-                                    catch (PSArgumentException)
-                                    {
-                                        prop = new PSNoteProperty("Expr" + exprCount, value);
-                                        ++exprCount;
-                                    }
-                                    obj.Properties.Add(prop);
+                                    obj.Properties.Add(new PSNoteProperty(fieldNames[i], value));
                                 }
                                 WriteObject(obj);
                             }
