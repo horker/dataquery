@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Management.Automation;
+using System.Runtime.Loader;
 
 #pragma warning disable CS1591
 
@@ -59,7 +60,10 @@ namespace Horker.Data
                 if (dataSet == null)
                 {
                     // .NET Core
-                    DbProviderFactories.RegisterFactory(invariant, type);
+                    // Resolve bundled providers in the module's context, not PowerShell's.
+                    var context = AssemblyLoadContext.GetLoadContext(typeof(RegisterDbProviderFactory).Assembly);
+                    var factoryType = System.Type.GetType(type, context.LoadFromAssemblyName, null, true);
+                    DbProviderFactories.RegisterFactory(invariant, factoryType);
                     return;
                 }
 

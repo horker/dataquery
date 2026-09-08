@@ -1,9 +1,11 @@
 Set-StrictMode -Version 4
 
-$db1 = "$PSScriptRoot\testdb1.db"
-$db2 = "$PSScriptRoot\testdb2.db"
-
 Describe "Copy-DataRow" {
+
+    BeforeAll {
+        $db1 = Join-Path $TestDrive 'testdb1.db'
+        $db2 = Join-Path $TestDrive 'testdb2.db'
+    }
 
     BeforeEach {
         New-Item -Force $db1

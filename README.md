@@ -12,11 +12,20 @@ The main features are:
 
 ## Installation
 
+The source version requires PowerShell 7.6.5 or later, running on .NET 10.
+Windows PowerShell 5.1 and PowerShell 7.5 or earlier are not supported.
+
 Horker DataQuery is available in [PowerShell Gallery](https://www.powershellgallery.com/packages/HorkerDataQuery)
 
 ```PowerShell
 Install-Module HorkerDataQuery
 ```
+
+To build from source on Windows x64, install the .NET 10 SDK, InvokeBuild,
+and Pester 5, then run `Invoke-Build` from PowerShell 7.6.5 or later.
+The build publishes the current managed and native NuGet dependencies into
+`module/Debug/HorkerDataQuery` and `module/Release/HorkerDataQuery`, and runs
+the .NET and PowerShell tests.
 
 ## Quick Walkthrough
 

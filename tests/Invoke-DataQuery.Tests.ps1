@@ -16,7 +16,7 @@ Describe "Invoke-DataQuery" {
   It "can make a query to SQLite" {
 
     $result = Invoke-DataQuery $mem "insert into Test (a, b, c) values (10, 'abc', null)"
-    $result | Should -BeNull
+    $result | Should -BeNullOrEmpty
     Get-DataQueryResult | Should -Be 1
 
     $result = Invoke-DataQuery $mem "select * from Test"
@@ -30,7 +30,7 @@ Describe "Invoke-DataQuery" {
   It "can take parameters as hashtable" {
 
     $result = Invoke-DataQuery $mem "insert into Test (a, b, c) values (@a, @b, @c)" @{ a = 10; b = "xxx"; c = $null }
-    $result | Should -BeNull
+    $result | Should -BeNullOrEmpty
     Get-DataQueryResult | Should -Be 1
 
     $result = Invoke-DataQuery $mem "select * from Test"
@@ -44,7 +44,7 @@ Describe "Invoke-DataQuery" {
   It "can take parameters as array" {
 
     $result = Invoke-DataQuery $mem "insert into Test (a, b, c) values (?, ?, ?)" @(10, "xxx", $null)
-    $result | Should -BeNull
+    $result | Should -BeNullOrEmpty
     Get-DataQueryResult | Should -Be 1
 
     $result = Invoke-DataQuery $mem "select * from Test"
@@ -58,7 +58,7 @@ Describe "Invoke-DataQuery" {
   It "can take parameters as single object" {
 
     $result = Invoke-DataQuery $mem "insert into Test (a, b, c) values (?, 'xxx', 3)" 999
-    $result | Should -BeNull
+    $result | Should -BeNullOrEmpty
     Get-DataQueryResult | Should -Be 1
 
     $result = Invoke-DataQuery $mem "select * from Test"

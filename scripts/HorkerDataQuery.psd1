@@ -45,7 +45,7 @@ This module would be helpful for software development, data analysis, and variou
 For more details, see the project site: https://github.com/horker/dataquery"
 
 # Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '6.0'
+PowerShellVersion = '7.6.5'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
@@ -66,13 +66,7 @@ PowerShellVersion = '6.0'
 # RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @(
-  "System.Data.Odbc.dll"
-  "System.Data.OleDb.dll"
-  "System.Data.SqlClient.dll"
-  "System.Data.SQLite.dll"
-  "Npgsql.dll"
-)
+RequiredAssemblies = @()
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()
@@ -84,9 +78,7 @@ RequiredAssemblies = @(
 # FormatsToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @(
-  "Horker.Data.dll"
-)
+NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @()
