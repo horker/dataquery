@@ -53,30 +53,7 @@ namespace Horker.Data
             if (ConfigurationManager.ConnectionStrings[name] != null)
                 throw new RuntimeException("Connection string name already exists");
 
-            // Source:
-            // https://stackoverflow.com/questions/360024/how-do-i-set-a-connection-string-config-programmatically-in-net
-
-            var collection = ConfigurationManager.ConnectionStrings;
-
-            var elementReadOnlyField =
-                // .NET Framework
-                typeof(ConfigurationElementCollection).GetField("_bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic) ??
-                // .NET Core
-                typeof(ConfigurationElementCollection).GetField("_readOnly", BindingFlags.Instance | BindingFlags.NonPublic);
-            elementReadOnlyField.SetValue(collection, false);
-
-            var collectionReadOnlyField =
-                // .NET Framework
-                typeof(ConfigurationElementCollection).GetField("bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic) ??
-                // .NET Core
-                typeof(ConfigurationElementCollection).GetField("_readOnly", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            collectionReadOnlyField.SetValue(collection, false);
-
-            collection.Add(new ConnectionStringSettings(name, connectionString, providerName));
-
-            collectionReadOnlyField.SetValue(collection, true);
-            elementReadOnlyField.SetValue(collection, true);
+            ConnectionStringMutation.Apply(c => c.Add(new ConnectionStringSettings(name, connectionString, providerName)));
         }
     }
 
@@ -111,21 +88,7 @@ namespace Horker.Data
             if (ConfigurationManager.ConnectionStrings[name] == null)
                 throw new RuntimeException("Connection string name not found");
 
-            var collection = ConfigurationManager.ConnectionStrings;
-
-            var elementReadOnlyField = typeof(ConfigurationElement).
-                GetField("_bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
-            elementReadOnlyField.SetValue(collection, false);
-
-            var collectionReadOnlyField = typeof(ConfigurationElementCollection).
-                GetField("bReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
-            collectionReadOnlyField.SetValue(collection, false);
-
-
-            collection.Remove(name);
-
-            collectionReadOnlyField.SetValue(collection, true);
-            elementReadOnlyField.SetValue(collection, true);
+            ConnectionStringMutation.Apply(c => c.Remove(name));
         }
 
         public static void RemoveAllConnectionStrings()
@@ -184,7 +147,7 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
-            var factory = DbProviderFactories.GetFactory(ProviderName);
+            var factory = ProviderRegistry.GetFactory(ProviderName);
             var builder = factory.CreateConnectionStringBuilder();
 
             foreach (DictionaryEntry entry in Parameters)

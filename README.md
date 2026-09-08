@@ -12,8 +12,17 @@ The main features are:
 
 ## Installation
 
-The source version requires PowerShell 7.6.5 or later, running on .NET 10.
-Windows PowerShell 5.1 and PowerShell 7.5 or earlier are not supported.
+The source version supports the following Windows x64 environments:
+
+| Host | Runtime | Bundled database providers |
+| --- | --- | --- |
+| Windows PowerShell 5.1 (Desktop) | .NET Framework 4.8 or later | Framework ODBC, OLE DB and SqlClient; SQLite 1.0.119 |
+| PowerShell 7.6.5 or later (Core) | .NET 10 | ODBC, OLE DB, SqlClient, SQLite 1.0.119 and Npgsql 10.0.3 |
+
+One module package contains both `lib/net48` and `lib/net10.0`; the loader selects
+the matching target. Running the Desktop version does not require .NET 10.
+32-bit PowerShell and Core versions earlier than 7.6.5 are not supported.
+Database drivers such as the Access driver must also be 64-bit.
 
 Horker DataQuery is available in [PowerShell Gallery](https://www.powershellgallery.com/packages/HorkerDataQuery)
 
@@ -25,7 +34,32 @@ To build from source on Windows x64, install the .NET 10 SDK, InvokeBuild,
 and Pester 5, then run `Invoke-Build` from PowerShell 7.6.5 or later.
 The build publishes the current managed and native NuGet dependencies into
 `module/Debug/HorkerDataQuery` and `module/Release/HorkerDataQuery`, and runs
-the .NET and PowerShell tests.
+the .NET tests for both targets and Pester tests in separate `powershell.exe
+-NoProfile` and `pwsh -NoProfile` processes. The Framework reference assemblies
+are restored through NuGet. Build tools must be available to the build process,
+and the Windows PowerShell execution policy must allow local test scripts.
+
+Import a local build using `Import-Module ./module/Release/HorkerDataQuery`.
+Provider registration and configuration imports only change process memory;
+they do not modify `machine.config` or the PowerShell host configuration.
+If Desktop already loaded a conflicting SQLite or Horker.Data assembly, start
+a new `powershell.exe -NoProfile` process and import this module first.
+
+### PostgreSQL on Windows PowerShell 5.1
+
+The Desktop target does not bundle or automatically register Npgsql. Install
+the 64-bit PostgreSQL ODBC driver separately and use an ODBC DSN, for example:
+
+```PowerShell
+Register-DataConnectionString pg System.Data.Odbc 'DSN=PostgreSQL64'
+$connection = New-DataConnection pg
+try { Invoke-DataQuery $connection 'select 1 as value' }
+finally { Close-DataConnection $connection }
+```
+
+Configure the DSN with the server and authentication settings required by your
+environment. PostgreSQL, SQL Server, Access and other external database
+connections require separate integration testing; the automated suite uses SQLite.
 
 ## Quick Walkthrough
 

@@ -131,7 +131,7 @@ namespace Horker.Data
 
                     if (AsDataRow || AsDataTable)
                     {
-                        var factory = DbProviderFactories.GetFactory(connection);
+                        var factory = ProviderRegistry.GetFactory(connection);
                         using (var adaptor = factory.CreateDataAdapter())
                         using (var dataSet = new DataSet())
                         {

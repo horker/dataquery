@@ -3,7 +3,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.Common;
 using System.Management.Automation;
-using System.Runtime.Loader;
+
 
 #pragma warning disable CS1591
 
@@ -55,28 +55,7 @@ namespace Horker.Data
 
         public static void AddDbProviderFactory(string name, string invariant, string description, string type)
         {
-            using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
-            {
-                if (dataSet == null)
-                {
-                    // .NET Core
-                    // Resolve bundled providers in the module's context, not PowerShell's.
-                    var context = AssemblyLoadContext.GetLoadContext(typeof(RegisterDbProviderFactory).Assembly);
-                    var factoryType = System.Type.GetType(type, context.LoadFromAssemblyName, null, true);
-                    DbProviderFactories.RegisterFactory(invariant, factoryType);
-                    return;
-                }
-
-                var rows = dataSet.Tables[0].Rows;
-
-                foreach (DataRow r in rows)
-                {
-                    if (r["InvariantName"].ToString() == invariant)
-                        throw new RuntimeException("Invariant name already exists");
-                }
-
-                rows.Add(name, description, invariant, type);
-            }
+            ProviderRegistry.Register(name, invariant, description, type);
         }
     }
 
@@ -108,47 +87,12 @@ namespace Horker.Data
 
         public static void RemoveDbProviderFactory(string invariant)
         {
-            using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
-            {
-                if (dataSet == null)
-                {
-                    // .NET Core
-                    DbProviderFactories.UnregisterFactory(invariant);
-                    return;
-                }
-
-                var rows = dataSet.Tables[0].Rows;
-
-                foreach (DataRow r in rows)
-                {
-                    if (r["InvariantName"].ToString() == invariant)
-                    {
-                        rows.Remove(r);
-                        return;
-                    }
-                }
-            }
-
-            throw new RuntimeException("Invariant name not found");
+            ProviderRegistry.Remove(invariant);
         }
 
         public static void RemoveAllDbProviderFactories()
         {
-            using (DataSet dataSet = ConfigurationManager.GetSection("system.data") as DataSet)
-            {
-                if (dataSet == null)
-                {
-                    // .NET Core
-                    foreach (var n in DbProviderFactories.GetProviderInvariantNames())
-                        DbProviderFactories.UnregisterFactory(n);
-                    return;
-                }
-
-                var rows = dataSet.Tables[0].Rows;
-
-                while (rows.Count > 0)
-                    rows.RemoveAt(rows.Count - 1);
-            }
+            ProviderRegistry.Clear();
         }
     }
 
@@ -171,11 +115,11 @@ namespace Horker.Data
         {
             if (ProviderName != null && ProviderName != "")
             {
-                WriteObject(DbProviderFactories.GetFactory(ProviderName));
+                WriteObject(ProviderRegistry.GetFactory(ProviderName));
                 return;
             }
 
-            WriteObject(DbProviderFactories.GetFactoryClasses());
+            WriteObject(ProviderRegistry.GetFactoryClasses());
         }
     }
 }

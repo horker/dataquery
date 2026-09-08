@@ -15,7 +15,7 @@ RootModule = 'HorkerDataQuery.psm1'
 ModuleVersion = '2.1.0'
 
 # Supported PSEditions
-CompatiblePSEditions = 'Core'
+CompatiblePSEditions = @('Desktop', 'Core')
 
 # ID used to uniquely identify this module
 GUID = 'fb732285-38d2-40da-93d1-be7cde81ddf7'
@@ -45,7 +45,7 @@ This module would be helpful for software development, data analysis, and variou
 For more details, see the project site: https://github.com/horker/dataquery"
 
 # Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '7.6.5'
+PowerShellVersion = '5.1'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
@@ -54,13 +54,13 @@ PowerShellVersion = '7.6.5'
 # PowerShellHostVersion = ''
 
 # Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-#DotNetFrameworkVersion = '4.5'
+DotNetFrameworkVersion = '4.8'
 
 # Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
 # CLRVersion = ''
 
 # Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
+ProcessorArchitecture = 'Amd64'
 
 # Modules that must be imported into the global environment prior to importing this module
 # RequiredModules = @()

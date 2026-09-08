@@ -1,4 +1,4 @@
-task . Compile, Build, ImportDebug, Test
+task . Compile, Build, Test
 
 Set-StrictMode -Version 4
 
@@ -28,8 +28,13 @@ task Build {
             Get-ChildItem -LiteralPath $modulePath -Force | Remove-Item -Recurse -Force -ErrorAction Stop
         }
         # Publish resolves managed and native dependencies from the current NuGet packages.
-        dotnet publish "$SOURCE_PATH\Horker.Data\Horker.Data.csproj" -c $configuration -r win-x64 --self-contained false -o $modulePath -nologo -v minimal
+        dotnet publish "$SOURCE_PATH\Horker.Data\Horker.Data.csproj" -f net10.0 -c $configuration -r win-x64 --self-contained false -o "$modulePath\lib\net10.0" -nologo -v minimal
         if ($LASTEXITCODE -ne 0) { throw "Publishing $configuration failed." }
+        $desktopPath = "$modulePath\lib\net48"
+        New-Item -ItemType Directory -Path "$desktopPath\x64" -Force | Out-Null
+        $desktopBuild = "$SOURCE_PATH\Horker.Data\bin\$configuration\net48"
+        Copy-Item "$desktopBuild\Horker.Data.*", "$desktopBuild\System.Data.SQLite.dll*" $desktopPath -ErrorAction Stop
+        Copy-Item "$desktopBuild\x64\SQLite.Interop.dll" "$desktopPath\x64" -ErrorAction Stop
         Copy-Item "$SCRIPT_PATH\*" $modulePath -ErrorAction Stop
     }
 }
@@ -45,12 +50,11 @@ task BuildHelp {
 task Test {
     dotnet test "$SOURCE_PATH\dataquery.sln" -c Release --no-build -nologo
     if ($LASTEXITCODE -ne 0) { throw "Unit tests failed." }
-    $configuration = New-PesterConfiguration
-    $configuration.Run.Path = "$PSScriptRoot\tests"
-    $configuration.Run.PassThru = $true
-    $configuration.TestRegistry.Enabled = $false
-    $result = Invoke-Pester -Configuration $configuration
-    if ($result.Result -ne 'Passed') { throw "PowerShell tests failed." }
+    $pesterPath = (Get-Module -ListAvailable Pester | Where-Object Version -ge '5.0' | Sort-Object Version -Descending | Select-Object -First 1).Path
+    foreach ($engine in 'powershell.exe', 'pwsh') {
+        & $engine -NoProfile -File "$PSScriptRoot\tools\Test-Module.ps1" -ModulePath ($MODULE_PATH -f 'Release') -PesterPath $pesterPath
+        if ($LASTEXITCODE -ne 0) { throw "$engine tests failed." }
+    }
 }
 
 task ImportDebug {

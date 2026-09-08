@@ -119,15 +119,15 @@ namespace Horker.Data
                 // ODBC and OLEDB Access connections fail to obtain the corresponding factories.
                 if (_connection is System.Data.Odbc.OdbcConnection)
                 {
-                    _factory = DbProviderFactories.GetFactory("System.Data.Odbc");
+                    _factory = ProviderRegistry.GetFactory("System.Data.Odbc");
                 }
                 else if (_connection is System.Data.OleDb.OleDbConnection)
                 {
-                    _factory = DbProviderFactories.GetFactory("System.Data.OleDb");
+                    _factory = ProviderRegistry.GetFactory("System.Data.OleDb");
                 }
                 else
                 {
-                    _factory = DbProviderFactories.GetFactory(_connection);
+                    _factory = ProviderRegistry.GetFactory(_connection);
                 }
 
                 if (_factory == null)

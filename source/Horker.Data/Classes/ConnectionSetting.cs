@@ -26,7 +26,7 @@ namespace Horker.Data
 
         public override DbConnection GetConnection()
         {
-            DbProviderFactory factory = DbProviderFactories.GetFactory(ProviderName);
+            DbProviderFactory factory = ProviderRegistry.GetFactory(ProviderName);
 
             var conn = factory.CreateConnection();
             conn.ConnectionString = ConnectionString;
