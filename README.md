@@ -4,15 +4,15 @@ Horker DataQuery is a database query utility based on ADO.NET.
 
 The main features are:
 - Written in C#, so that it works fast for large data
-- Supports every database product that provides the ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB, and ODBC
+- Supports database products with an ADO.NET driver, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, DuckDB, Access, OLEDB, and ODBC
 - Returns query results as PowerShell objects, and exports PowerShell objects into database tables
 - Reads `app.config` or `web.config` to define database providers and connection strings
 - Gets information from the database schema
-- Provides the built-in SQLite driver
+- Bundles SQLite on both supported hosts, plus Npgsql and DuckDB on PowerShell 7
 
 ## Installation
 
-The source version supports the following Windows x64 environments:
+Version 3.0.0 supports the following Windows x64 environments:
 
 | Host | Runtime | Bundled database providers |
 | --- | --- | --- |

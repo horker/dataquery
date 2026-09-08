@@ -12,7 +12,7 @@
 RootModule = 'HorkerDataQuery.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.1.0'
+ModuleVersion = '3.0.0'
 
 # Supported PSEditions
 CompatiblePSEditions = @('Desktop', 'Core')
@@ -27,18 +27,18 @@ Author = 'horker'
 CompanyName = ''
 
 # Copyright statement for this module
-Copyright = '(c) 2018-2023 horker. All rights reserved.'
+Copyright = '(c) 2018-2026 horker. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = "Horker DataQuery is a database query utility based on System.Data classes of .NET Core.
+Description = "Horker DataQuery is an ADO.NET database query utility for Windows x64, supporting Windows PowerShell 5.1 (.NET Framework 4.8+) and PowerShell 7.6.5+ (.NET 10).
 
 The main features are:
 - Written in C# so that it works fast for large data
-- Supports every database library that implements the System.Data interface, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, Access, OLEDB and ODBC
-- PowerShell interoperatability; gets query results as PowerShell objects and exports PowerShell objects into database tables
+- Supports ADO.NET database providers, including SQL Server, Oracle, MySQL, PostgreSQL, SQLite, DuckDB, Access, OLEDB and ODBC
+- PowerShell interoperability; gets query results as PowerShell objects and exports PowerShell objects into database tables
 - Reads app.config or web.config in your app to define database providers and connection strings
 - Gets information from the database schema
-- Provides the built-in ODBC, OLEDB and SQLite drivers
+- Includes SQLite on both hosts, with Npgsql and DuckDB additionally bundled on PowerShell 7
 
 This module would be helpful for software development, data analysis, and various data manipulation tasks.
 
@@ -136,7 +136,7 @@ PrivateData = @{
           'data', 'analysis', 'conversion',
           'query', 'select', 'insert', 'update', 'delete', 'create', 'drop',
           'sql', 'server', 'sqlserver', 'oracle', 'mysql', 'postgresql',
-          'firebird', 'db2', 'sqlite', 'access', 'msaccess'
+          'firebird', 'db2', 'sqlite', 'duckdb', 'access', 'msaccess'
         )
 
         # A URL to the license for this module.
@@ -150,6 +150,13 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @"
+v3.0.0
+- Support Windows PowerShell 5.1 on .NET Framework 4.8+ alongside PowerShell 7.6.5+ on .NET 10 (Windows x64 only).
+- Update dependencies, including SQLite 1.0.119 and Npgsql 10.0.3; isolate runtime-specific assemblies in one module package.
+- Bundle DuckDB.NET.Data.Full 1.5.5 on PowerShell 7 for queries, row copies, exports and schema inspection, with a duckdb-memory connection.
+- Improve provider registration, configuration updates, query column naming, rollback and connection cleanup; expand tests for both hosts.
+- DuckDB reports -1 affected rows and rejects positive timeouts. Desktop does not bundle DuckDB or Npgsql; PostgreSQL can use an installed ODBC driver.
+
 v2.1.0
 - Bump SQLite library version to 1.0.117
 
