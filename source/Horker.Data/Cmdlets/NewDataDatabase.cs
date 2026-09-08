@@ -36,10 +36,7 @@ namespace Horker.Data
         {
             try
             {
-                ProviderInfo provider;
-                PSDriveInfo drive;
-                var path = SessionState.Path.GetUnresolvedProviderPathFromPSPath(Path, out provider, out drive);
-                if (provider.Name != "FileSystem") throw new ArgumentException("Path must use the FileSystem provider.");
+                var path = DatabasePath.Resolve(Path, SessionState);
                 var type = DatabaseCreation.SelectType(path, DatabaseType);
                 if (type == "DuckDB") DuckDbSupport.RequireSupportedHost();
                 var factory = ProviderRegistry.GetFactory(type == "SQLite" ? "System.Data.SQLite" : DuckDbSupport.ProviderName);

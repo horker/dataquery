@@ -52,13 +52,18 @@ namespace Horker.Data
             if (cs != null)
                 return new ProviderConnectionSetting(cs.ProviderName, cs.ConnectionString).GetConnection();
 
+            // Use the active PowerShell session even during Copy-DataRow's argument
+            // conversion. The process current directory is shared across runspaces
+            // and need not match PowerShell's current location.
+            var path = DatabasePath.Resolve(FileOrName, new SessionState());
+
             if (FileOrName.EndsWith(".duckdb", StringComparison.OrdinalIgnoreCase))
             {
                 DuckDbSupport.RequireSupportedHost();
-                if (!File.Exists(FileOrName))
+                if (!File.Exists(path))
                     throw new RuntimeException("DuckDB file does not exist. Use New-DataDatabase filename.duckdb, or New-DataConnection -ProviderName DuckDB.NET.Data -ConnectionString 'Data Source=filename.duckdb'.");
                 var builder = ProviderRegistry.GetFactory(DuckDbSupport.ProviderName).CreateConnectionStringBuilder();
-                builder["Data Source"] = FileOrName;
+                builder["Data Source"] = path;
                 return new ProviderConnectionSetting(DuckDbSupport.ProviderName, builder.ConnectionString).GetConnection();
             }
 
@@ -67,7 +72,7 @@ namespace Horker.Data
             {
                 var builder = new System.Data.Odbc.OdbcConnectionStringBuilder();
                 builder.Add("Driver", "{Microsoft Access Driver (*.mdb, *.accdb)}");
-                builder.Add("Dbq", FileOrName);
+                builder.Add("Dbq", path);
 
                 var conn = new System.Data.Odbc.OdbcConnection();
                 conn.ConnectionString = builder.ConnectionString;
@@ -78,10 +83,10 @@ namespace Horker.Data
 
             // Assume a SQLite file
             // Restricts to an exsiting file to prevent mistyping from creating a new database
-            if (File.Exists(FileOrName))
+            if (File.Exists(path))
             {
                 var builder = new System.Data.SQLite.SQLiteConnectionStringBuilder();
-                builder.Add("Data Source", FileOrName);
+                builder.Add("Data Source", path);
 
                 var conn = new System.Data.SQLite.SQLiteConnection();
                 conn.ConnectionString = builder.ConnectionString;

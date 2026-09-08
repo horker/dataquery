@@ -152,6 +152,7 @@ PrivateData = @{
         # ReleaseNotes of this module
         ReleaseNotes = @"
 v3.0.0
+- Resolve database file arguments from the current PowerShell location consistently across all cmdlets.
 - Add New-DataDatabase to create empty SQLite or DuckDB files, with optional replacement and FileInfo output.
 - Support Windows PowerShell 5.1 on .NET Framework 4.8+ alongside PowerShell 7.6.5+ on .NET 10 (Windows x64 only).
 - Update dependencies, including SQLite 1.0.119 and Npgsql 10.0.3; isolate runtime-specific assemblies in one module package.

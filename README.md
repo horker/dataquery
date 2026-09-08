@@ -40,6 +40,11 @@ are restored through NuGet. Build tools must be available to the build process,
 and the Windows PowerShell execution policy must allow local test scripts.
 
 Import a local build using `Import-Module ./module/Release/HorkerDataQuery`.
+Database file arguments are resolved literally relative to the current PowerShell
+location for creation, connections, queries, copies, exports and schema requests.
+Registered connection names take precedence over file paths when opening databases.
+Connection strings supplied explicitly or through configuration retain provider-defined
+semantics; relative paths embedded inside those strings are not rewritten.
 Provider registration and configuration imports only change process memory;
 they do not modify `machine.config` or the PowerShell host configuration.
 If Desktop already loaded a conflicting SQLite or Horker.Data assembly, start
