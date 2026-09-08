@@ -7,6 +7,9 @@ schema: 2.0.0
 
 # Get-DataQueryResult
 
+DuckDB queries always return `-1` for affected-row counts because DuckDB.NET's
+reader does not expose them, including for INSERT/UPDATE/DELETE statements.
+
 ## SYNOPSIS
 
 Gets a result of the last SQL statement.

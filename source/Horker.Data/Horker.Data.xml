@@ -19,6 +19,7 @@
             <summary>
             <para type="synopsis">Opens a database connection.</para>
             <para type="description">The New-DataConnection cmdlet opens a database connection.</para>
+            <para type="description">On PowerShell 7, DuckDB.NET.Data is bundled. Use duckdb-memory for an in-memory database, an existing .duckdb path, or explicitly specify ProviderName DuckDB.NET.Data and ConnectionString 'Data Source=analytics.duckdb' to create a file. Registered names take precedence. Keep the connection open to retain an in-memory database. DuckDB is unavailable on Windows PowerShell 5.1.</para>
             </summary>
         </member>
         <member name="P:Horker.Data.NewDataConnection.FileOrName">
@@ -117,6 +118,7 @@
         <member name="T:Horker.Data.Cmdlets.CopyDataRow">
             <summary>
             <para type="synopsis">Copy data from a database to another.</para>
+            <para type="description">On PowerShell 7, DuckDB can be the source or target. Generated DuckDB INSERTs use quoted columns and positional parameters. Explicit TargetSql uses $ColumnName parameters. A positive Timeout is rejected before execution if either side is DuckDB; omit it or use zero. Failed writes roll back without closing caller-owned connections.</para>
             <para type="description">The Copy-DataRow cmdlet obtains a dataset from a database specified by the -SourceConnection parameter by executing the -SourceSql statement and inserts them to a table of another database spceified bu the -TargetConnection parameter.</para>
             <para type="description">When you specify a target table name by the -TargetTable parameter, the cmdlet assumes the specified table contains the same set of columns as the source dataset and inserts them into the corresponding columns.</para>
             <para type="description">When you specify a SQL statement for copying by the -TargetSql parameter, the cmdlet executes it for each data row of the source dataset. The SQL statement should contain named parameters corresponding to the columns of the source dataset.</para>
@@ -210,6 +212,7 @@
         <member name="T:Horker.Data.ExportDataTable">
             <summary>
             <para type="synopsis">Inserts objects into a database table.</para>
+            <para type="description">DuckDB on PowerShell 7 uses VARCHAR for new tables unless TypeName is specified, quoted column identifiers and positional INSERT parameters. Schema-qualified table expressions are accepted. Only table-not-found errors trigger creation. Failed row inserts roll back without closing caller-owned connections.</para>
             <para type="description">The Export-DataTable cmdlet inserts objects from the pipeline into a database table specified by the -TableName parameter.</para>
             <para type="description">The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.</para>
             <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as a string type. (This does not matter for SQLite because it allows to apply arithmetic operations to string columns.) If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet beforehand.</para>
@@ -249,6 +252,7 @@
             <summary>
             <para type="synopsis">Executes a database query.</para>
             <para type="description">The Invoke-DataQuery cmdlet executes a query to a database.</para>
+            <para type="description">DuckDB on PowerShell 7 accepts positional ? or $1 parameters and dictionary $name parameters (keys name or $name). SQL @name is not rewritten. All output modes are supported; BLOBs become byte arrays and other CLR types are preserved. DuckDB affected-row counts are -1. Positive timeouts are unsupported; omit Timeout or use zero. Negative timeouts are invalid.</para>
             <para type="description">Despite its name, this cmdlet can execute any SQL statement, including INSERT, DELETE and CREATE. When such a statement is executed, no result will return. By specifying the -ShowRecordsAffected parameter, you can get the number of records affected by the statement. You can always obtain the same value by the Get-DataQueryResult cmdlet.</para>
             <para type="description">By default, the DBNull values in the result data set are replaced with normal null values, and the results are returned as a stream of PSObject values. You can change this behavior by the -PreserveDbNull and -AsDataRows switch parameters.</para>
             </summary>
@@ -301,12 +305,14 @@
         <member name="T:Horker.Data.GetDataQueryResult">
             <summary>
             <para type="synopsis">Gets a result of the last query statement.</para>
+            <para type="description">DuckDB always reports -1 for affected-row counts, including updates.</para>
             <para type="description">Gets the number of records affected by the last statement by the Invoke-DataQuery cmdlet. If the previous statement is SELECT, the cmdlet will return -1.</para>
             </summary>
         </member>
         <member name="T:Horker.Data.GetDataSchema">
             <summary>
             <para type="synopsis">Gets database schema information.</para>
+            <para type="description">On PowerShell 7, DuckDB delegates to the provider's GetSchema implementation. Collection listings, Tables and Columns are supported; unsupported collections produce errors.</para>
             <para type="description">The Get-DataSchema cmdlet gets database schema information that the database engine provides. If a schema collection name (-CollectionName) is not specified, it returns the information of all available schemas. The provided information varies among database products.</para>
             </summary>
         </member>

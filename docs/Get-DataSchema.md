@@ -7,6 +7,10 @@ schema: 2.0.0
 
 # Get-DataSchema
 
+On PowerShell 7, DuckDB delegates schema requests to DuckDB.NET. Omitting the
+collection name lists available collections; `Tables` and `Columns` are supported.
+Unsupported collections produce a provider error.
+
 ## SYNOPSIS
 
 Gets database schema information.

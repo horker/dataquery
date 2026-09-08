@@ -7,6 +7,17 @@ schema: 2.0.0
 
 # New-DataConnection
 
+DuckDB is bundled on PowerShell 7.6.5+ / Windows x64 only. Use
+`New-DataConnection duckdb-memory` for a private memory database, or
+`New-DataConnection -ProviderName DuckDB.NET.Data -ConnectionString 'Data Source=analytics.duckdb'`
+to create/open a file. Existing `.duckdb` paths may be specified directly (case-insensitive
+suffix); missing paths require explicit creation. Registered names take precedence.
+Explicit provider selection accepts arbitrary extensions. Add `access_mode=READ_ONLY`
+to the connection string for read-only access. Retain the connection to share a
+memory database between commands, then call `Close-DataConnection` in `finally`.
+The existing `memory` connection remains SQLite. Windows PowerShell 5.1 reports
+DuckDB as unsupported without loading its DLLs.
+
 ## SYNOPSIS
 
 Opens a database connection.

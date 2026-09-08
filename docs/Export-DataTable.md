@@ -7,6 +7,14 @@ schema: 2.0.0
 
 # Export-DataTable
 
+DuckDB is supported on PowerShell 7. New tables use `VARCHAR` by default;
+`-TypeName` overrides this without type inference. Existing column types are retained.
+Generated column identifiers escape embedded double quotes and INSERTs use `?`
+parameters. Table expressions may be schema-qualified, for example `analytics.items`;
+quote table names yourself as required by SQL. Only a table-not-found diagnostic
+triggers automatic creation; other schema/query errors are propagated. Failed row
+inserts roll back the batch. Caller-owned connections remain open after errors.
+
 ## SYNOPSIS
 
 Inserts objects as data rows into a database table.

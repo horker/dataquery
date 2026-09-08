@@ -29,8 +29,8 @@ namespace Horker.Data
             DbProviderFactory factory = ProviderRegistry.GetFactory(ProviderName);
 
             var conn = factory.CreateConnection();
-            conn.ConnectionString = ConnectionString;
-            conn.Open();
+            try { conn.ConnectionString = ConnectionString; conn.Open(); }
+            catch { DuckDbSupport.TryCleanup(conn.Dispose); throw; }
 
             return conn;
         }
@@ -51,6 +51,16 @@ namespace Horker.Data
             var cs = ConfigurationManager.ConnectionStrings[FileOrName];
             if (cs != null)
                 return new ProviderConnectionSetting(cs.ProviderName, cs.ConnectionString).GetConnection();
+
+            if (FileOrName.EndsWith(".duckdb", StringComparison.OrdinalIgnoreCase))
+            {
+                DuckDbSupport.RequireSupportedHost();
+                if (!File.Exists(FileOrName))
+                    throw new RuntimeException("DuckDB file does not exist. Create it explicitly with New-DataConnection -ProviderName DuckDB.NET.Data -ConnectionString 'Data Source=filename.duckdb'.");
+                var builder = ProviderRegistry.GetFactory(DuckDbSupport.ProviderName).CreateConnectionStringBuilder();
+                builder["Data Source"] = FileOrName;
+                return new ProviderConnectionSetting(DuckDbSupport.ProviderName, builder.ConnectionString).GetConnection();
+            }
 
             // Access file?
             if (FileOrName.EndsWith(".accdb") || FileOrName.EndsWith(".mdb"))

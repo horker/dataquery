@@ -17,7 +17,7 @@ The source version supports the following Windows x64 environments:
 | Host | Runtime | Bundled database providers |
 | --- | --- | --- |
 | Windows PowerShell 5.1 (Desktop) | .NET Framework 4.8 or later | Framework ODBC, OLE DB and SqlClient; SQLite 1.0.119 |
-| PowerShell 7.6.5 or later (Core) | .NET 10 | ODBC, OLE DB, SqlClient, SQLite 1.0.119 and Npgsql 10.0.3 |
+| PowerShell 7.6.5 or later (Core) | .NET 10 | ODBC, OLE DB, SqlClient, SQLite 1.0.119, Npgsql 10.0.3 and DuckDB.NET.Data.Full 1.5.5 |
 
 One module package contains both `lib/net48` and `lib/net10.0`; the loader selects
 the matching target. Running the Desktop version does not require .NET 10.
@@ -59,7 +59,70 @@ finally { Close-DataConnection $connection }
 
 Configure the DSN with the server and authentication settings required by your
 environment. PostgreSQL, SQL Server, Access and other external database
-connections require separate integration testing; the automated suite uses SQLite.
+connections require separate integration testing; the automated suite uses local SQLite and DuckDB databases.
+
+### DuckDB on PowerShell 7
+
+DuckDB.NET.Data.Full 1.5.5 and its Windows x64 native library are bundled under
+`lib/net10.0`. No separate DuckDB installation is required. Windows PowerShell
+5.1 does not bundle or register DuckDB and reports that PowerShell 7 is required.
+
+```powershell
+$c = New-DataConnection duckdb-memory
+try {
+    Invoke-DataQuery $c 'select $value as Value' @{ value = 42 }
+} finally { Close-DataConnection $c }
+
+# Explicit creation also accepts files with arbitrary extensions.
+$c = New-DataConnection -ProviderName DuckDB.NET.Data `
+    -ConnectionString 'Data Source=analytics.duckdb'
+Close-DataConnection $c
+
+# Shorthand only opens an existing file; suffix matching is case-insensitive.
+$c = New-DataConnection ./analytics.duckdb
+Close-DataConnection $c
+
+$c = New-DataConnection -ProviderName DuckDB.NET.Data `
+    -ConnectionString 'Data Source=analytics.duckdb;access_mode=READ_ONLY'
+Close-DataConnection $c
+```
+
+Registered connection names take precedence over file extensions. A missing
+`.duckdb` file is not created by shorthand. `memory` remains SQLite; retain an
+explicitly opened `duckdb-memory` connection to use the same in-memory database
+across commands. Connections supplied by the caller remain open after queries,
+copies and exports, including failures; implicitly opened connections are disposed.
+
+Use `?` or `$1`, `$2`, ... for positional parameters (arrays or scalar values),
+and `$name` for dictionary parameters. Dictionary keys accept `name` or `$name`.
+SQL text containing `@name` is not rewritten. For `Copy-DataRow -TargetSql`, use
+`$ColumnName` matching the source columns. Generated DuckDB INSERT statements
+use positional parameters and double-quoted, escaped column names.
+
+`Invoke-DataQuery` supports normal objects, `-AsDataRow` and `-AsDataTable`,
+including empty tables with column metadata. Standard numbers, strings, booleans
+and timestamps retain CLR types. BLOB values are copied to `byte[]` before the
+native reader is disposed. Other provider values, including compound types, are
+returned without custom JSON or string conversion. SQL NULL becomes `$null` in
+normal output, or `DBNull` with `-PreserveDbNull` and in DataRow/DataTable output.
+
+`Export-DataTable` creates missing tables using `VARCHAR` unless `-TypeName` is
+specified; it does not infer types. Existing tables retain their types. Schema-qualified
+table expressions such as `analytics.items` are accepted; quote table identifiers
+yourself when necessary. Failed row inserts roll back the batch. `Get-DataSchema`
+delegates to DuckDB.NET, including the collection list, `Tables` and `Columns`;
+unsupported collections produce errors.
+
+DuckDB query affected-row counts (`Get-DataQueryResult` and
+`-ShowRecordsAffected`) are always `-1`. A positive `-Timeout` is rejected before
+SQL execution, including copies with DuckDB on either side. Omit the timeout or
+use `0` for no limit; negative values are invalid. Dedicated CSV/Parquet helpers,
+Appender, automatic extension installation and changes to multiple-result output
+are outside this integration.
+
+Provider references: [installation](https://duckdb.net/docs/getting-started.html),
+[parameters](https://duckdb.net/docs/basic-usage.html),
+[CLR types](https://duckdb.net/docs/type-mapping.html).
 
 ## Quick Walkthrough
 

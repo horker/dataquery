@@ -11,6 +11,7 @@ namespace Horker.Data
 {
     /// <summary>
     /// <para type="synopsis">Inserts objects into a database table.</para>
+    /// <para type="description">DuckDB on PowerShell 7 uses VARCHAR for new tables unless TypeName is specified, quoted column identifiers and positional INSERT parameters. Schema-qualified table expressions are accepted. Only table-not-found errors trigger creation. Failed row inserts roll back without closing caller-owned connections.</para>
     /// <para type="description">The Export-DataTable cmdlet inserts objects from the pipeline into a database table specified by the -TableName parameter.</para>
     /// <para type="description">The properties of the objects are mapped to the database columns with the same names. If there are no corresponding columns in the table, such properties are ignored.</para>
     /// <para type="description">If the specified table does not exist, the cmdlet will create a new table based on the structure of the given object. In the current version, all columns are defined as a string type. (This does not matter for SQLite because it allows to apply arithmetic operations to string columns.) If you need a table with exact types, create a table manually by the Invoke-DataQuery cmdlet beforehand.</para>
@@ -71,34 +72,21 @@ namespace Horker.Data
 
         private void DisposeResources()
         {
-            if (_connectionOpened)
-            {
-                if (_connection.State == ConnectionState.Open)
-                    _connection.Close();
-
-                try
-                {
-                    _connection.Dispose();
-                }
-                catch (ObjectDisposedException) {}
-            }
-
-            if (_builder != null)
+            var transaction = _transaction;
+            var builder = _builder;
+            var ownedConnection = _connectionOpened ? _connection : null;
+            _transaction = null;
+            _builder = null;
+            _connectionOpened = false;
+            try { transaction?.Dispose(); }
+            finally
             {
                 try
                 {
-                    _builder.Dispose();
+                    // Some builders dispose the already-disposed schema adapter again.
+                    try { builder?.Dispose(); } catch (ObjectDisposedException) { }
                 }
-                catch (ObjectDisposedException) {}
-            }
-
-            if (_transaction != null)
-            {
-                try
-                {
-                    _transaction.Dispose();
-                }
-                catch (ObjectDisposedException) {}
+                finally { ownedConnection?.Dispose(); }
             }
         }
 
@@ -136,6 +124,7 @@ namespace Horker.Data
                     throw new PipelineStoppedException();
                 }
 
+                if (DuckDbSupport.IsDuckDb(_connection)) return;
                 _builder = _factory.CreateCommandBuilder();
 
                 // Supply a command builder with an adaptor object because some providers' builders
@@ -152,7 +141,7 @@ namespace Horker.Data
             }
             catch (Exception e)
             {
-                DisposeResources();
+                DuckDbSupport.TryCleanup(DisposeResources);
 
                 WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
                 throw new PipelineStoppedException();
@@ -172,7 +161,7 @@ namespace Horker.Data
 
                     CreateTable();
 
-                    _useNamedParameters = TestNamedParameterSupport();
+                    _useNamedParameters = !DuckDbSupport.IsDuckDb(_connection) && TestNamedParameterSupport();
 
                     _insertStmt = "insert into " + _qualifiedTableName + " (";
 
@@ -206,7 +195,7 @@ namespace Horker.Data
                                 }
                                 ++count;
 
-                                var qualified = _builder.QuoteIdentifier(p.Name);
+                                var qualified = QuoteColumn(p.Name);
                                 buffer.Append(qualified);
 
                                 var param = cmd.CreateParameter();
@@ -224,6 +213,7 @@ namespace Horker.Data
                                     param.Value = value;
                                 }
 
+                                if (DuckDbSupport.IsDuckDb(_connection) && param.Value == null) param.Value = DBNull.Value;
                                 cmd.Parameters.Add(param);
 
                                 placeholders.Append(pa);
@@ -246,7 +236,7 @@ namespace Horker.Data
                                 }
                                 ++count;
 
-                                var qualified = _builder.QuoteIdentifier(p.Name);
+                                var qualified = QuoteColumn(p.Name);
                                 buffer.Append(qualified);
 
                                 var param = cmd.CreateParameter();
@@ -264,6 +254,7 @@ namespace Horker.Data
                                     param.Value = value;
                                 }
 
+                                if (DuckDbSupport.IsDuckDb(_connection) && param.Value == null) param.Value = DBNull.Value;
                                 cmd.Parameters.Add(param);
 
                                 placeholders.Append(pa);
@@ -291,9 +282,9 @@ namespace Horker.Data
             catch (Exception e)
             {
                 if (_transaction != null)
-                    _transaction.Rollback();
+                    DuckDbSupport.TryCleanup(_transaction.Rollback);
 
-                DisposeResources();
+                DuckDbSupport.TryCleanup(DisposeResources);
 
                 WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
                 throw new PipelineStoppedException();
@@ -302,6 +293,7 @@ namespace Horker.Data
 
         protected override void EndProcessing()
         {
+            bool failed = false;
             try
             {
                 if (_transaction != null)
@@ -309,12 +301,15 @@ namespace Horker.Data
             }
             catch (Exception e)
             {
+                failed = true;
+                if (_transaction != null) DuckDbSupport.TryCleanup(_transaction.Rollback);
                 WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
                 throw new PipelineStoppedException();
             }
             finally
             {
-                DisposeResources();
+                if (failed) DuckDbSupport.TryCleanup(DisposeResources);
+                else DisposeResources();
             }
         }
 
@@ -329,6 +324,9 @@ namespace Horker.Data
             return TableName;
         }
 
+        private string QuoteColumn(string name) => DuckDbSupport.IsDuckDb(_connection)
+            ? DuckDbSupport.QuoteIdentifier(name) : _builder.QuoteIdentifier(name);
+
         private void CreateTable()
         {
             string stmt;
@@ -342,26 +340,36 @@ namespace Horker.Data
                 WriteVerbose(stmt);
 
                 using (var cmd = _connection.CreateCommand())
-                using (var adaptor = _factory.CreateDataAdapter())
                 {
-                    cmd.CommandText = stmt;
-                    adaptor.SelectCommand = cmd;
-
-                    using (var dataSet = new DataSet())
+                    if (DuckDbSupport.IsDuckDb(_connection))
                     {
-                        adaptor.FillSchema(dataSet, SchemaType.Mapped);
+                        cmd.CommandText = stmt + " LIMIT 0";
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            _fieldSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                            for (int i = 0; i < reader.FieldCount; i++) _fieldSet.Add(reader.GetName(i));
+                        }
+                        return;
+                    }
+                    using (var adaptor = _factory.CreateDataAdapter())
+                    {
+                        cmd.CommandText = stmt;
+                        adaptor.SelectCommand = cmd;
 
-                        var table = dataSet.Tables[0];
-
-                        _fieldSet = new HashSet<string>();
-                        foreach (DataColumn c in table.Columns)
-                            _fieldSet.Add(c.ColumnName);
+                        using (var dataSet = new DataSet())
+                        {
+                            adaptor.FillSchema(dataSet, SchemaType.Mapped);
+                            var table = dataSet.Tables[0];
+                            _fieldSet = new HashSet<string>();
+                            foreach (DataColumn c in table.Columns)
+                                _fieldSet.Add(c.ColumnName);
+                        }
                     }
 
                     tableExists = true;
                 }
             }
-            catch (DbException)
+            catch (DbException error) when (!DuckDbSupport.IsDuckDb(_connection) || DuckDbSupport.IsMissingTable(error))
             {
                 // Ignore an exception
             }
@@ -404,6 +412,10 @@ namespace Horker.Data
             {
                 // User-specified type name
                 stringType = TypeName;
+            }
+            else if (DuckDbSupport.IsDuckDb(_connection))
+            {
+                stringType = "VARCHAR";
             }
             else if (_connection is System.Data.SQLite.SQLiteConnection)
             {
@@ -460,7 +472,7 @@ namespace Horker.Data
 
                 first = false;
                 templ.Append("    ");
-                templ.Append(_builder.QuoteIdentifier(f));
+                templ.Append(QuoteColumn(f));
                 templ.Append(" {0}");
             }
             templ.AppendLine("\r\n)");

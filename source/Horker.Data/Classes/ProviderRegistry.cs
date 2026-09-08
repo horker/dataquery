@@ -44,6 +44,7 @@ namespace Horker.Data
 
         internal static DbProviderFactory GetFactory(string invariant)
         {
+            if (invariant == DuckDbSupport.ProviderName) DuckDbSupport.RequireSupportedHost();
 #if NETFRAMEWORK
             lock (Sync)
             {
@@ -60,6 +61,7 @@ namespace Horker.Data
 
         internal static DbProviderFactory GetFactory(DbConnection connection)
         {
+            if (DuckDbSupport.IsDuckDb(connection)) return GetFactory(DuckDbSupport.ProviderName);
             // Honor removals for providers supplied by this module.
             if (connection is System.Data.Odbc.OdbcConnection) return GetFactory("System.Data.Odbc");
             if (connection is System.Data.OleDb.OleDbConnection) return GetFactory("System.Data.OleDb");

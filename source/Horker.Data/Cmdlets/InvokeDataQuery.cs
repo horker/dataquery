@@ -12,6 +12,7 @@ namespace Horker.Data
     /// <summary>
     /// <para type="synopsis">Executes a database query.</para>
     /// <para type="description">The Invoke-DataQuery cmdlet executes a query to a database.</para>
+    /// <para type="description">DuckDB on PowerShell 7 accepts positional ? or $1 parameters and dictionary $name parameters (keys name or $name). SQL @name is not rewritten. All output modes are supported; BLOBs become byte arrays and other CLR types are preserved. DuckDB affected-row counts are -1. Positive timeouts are unsupported; omit Timeout or use zero. Negative timeouts are invalid.</para>
     /// <para type="description">Despite its name, this cmdlet can execute any SQL statement, including INSERT, DELETE and CREATE. When such a statement is executed, no result will return. By specifying the -ShowRecordsAffected parameter, you can get the number of records affected by the statement. You can always obtain the same value by the Get-DataQueryResult cmdlet.</para>
     /// <para type="description">By default, the DBNull values in the result data set are replaced with normal null values, and the results are returned as a stream of PSObject values. You can change this behavior by the -PreserveDbNull and -AsDataRows switch parameters.</para>
     /// </summary>
@@ -48,6 +49,7 @@ namespace Horker.Data
         /// <para type="description">A query timeout in seconds.</para>
         /// </summary>
         [Parameter(Position = 3, Mandatory = false)]
+        [ValidateRange(0, int.MaxValue)]
         public int Timeout { get; set; }
 
         /// <summary>
@@ -79,8 +81,10 @@ namespace Horker.Data
             var opener = new ConnectionSpecifier(FileOrName, Connection, null, null);
             var connection = opener.Connection;
             bool connectionOpened = opener.ConnectionOpened;
+            bool failed = false;
 
             try {
+                DuckDbSupport.ValidateTimeout(Timeout, connection);
                 using (DbCommand cmd = connection.CreateCommand())
                 {
                     cmd.CommandText = Query;
@@ -88,7 +92,9 @@ namespace Horker.Data
                     if (MyInvocation.BoundParameters.ContainsKey("Timeout"))
                         cmd.CommandTimeout = Timeout;
 
-                    if (Parameters != null)
+                    if (DuckDbSupport.IsDuckDb(connection))
+                        DuckDbSupport.SetParameters(cmd, Parameters);
+                    else if (Parameters != null)
                     {
                         if (Parameters is IDictionary dictParam)
                         {
@@ -129,7 +135,18 @@ namespace Horker.Data
                         }
                     }
 
-                    if (AsDataRow || AsDataTable)
+                    if ((AsDataRow || AsDataTable) && DuckDbSupport.IsDuckDb(connection))
+                    {
+                        ProviderRegistry.GetFactory(connection);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            var table = DuckDbSupport.ReadTable(reader);
+                            GetDataQueryResult.RecordsAffected = -1;
+                            if (AsDataTable) WriteObject(table);
+                            else foreach (DataRow row in table.Rows) WriteObject(row);
+                        }
+                    }
+                    else if (AsDataRow || AsDataTable)
                     {
                         var factory = ProviderRegistry.GetFactory(connection);
                         using (var adaptor = factory.CreateDataAdapter())
@@ -183,7 +200,7 @@ namespace Horker.Data
                                 {
                                     object value = null;
                                     if (PreserveDbNull || !reader.IsDBNull(i))
-                                        value = reader.GetValue(i);
+                                        value = DuckDbSupport.IsDuckDb(connection) ? DuckDbSupport.ReadValue(reader, i) : reader.GetValue(i);
 
                                     obj.Properties.Add(new PSNoteProperty(fieldNames[i], value));
                                 }
@@ -197,12 +214,13 @@ namespace Horker.Data
                 }
             }
             catch (Exception e) {
+                failed = true;
                 WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
             }
             finally {
                 if (connectionOpened) {
-                    connection.Close();
-                    connection.Dispose();
+                    if (failed) DuckDbSupport.TryCleanup(connection.Dispose);
+                    else connection.Dispose();
                 }
             }
         }
@@ -210,6 +228,7 @@ namespace Horker.Data
 
     /// <summary>
     /// <para type="synopsis">Gets a result of the last query statement.</para>
+    /// <para type="description">DuckDB always reports -1 for affected-row counts, including updates.</para>
     /// <para type="description">Gets the number of records affected by the last statement by the Invoke-DataQuery cmdlet. If the previous statement is SELECT, the cmdlet will return -1.</para>
     /// </summary>
     [Cmdlet("Get", "DataQueryResult")]

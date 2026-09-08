@@ -9,6 +9,7 @@ namespace Horker.Data
 {
     /// <summary>
     /// <para type="synopsis">Gets database schema information.</para>
+    /// <para type="description">On PowerShell 7, DuckDB delegates to the provider's GetSchema implementation. Collection listings, Tables and Columns are supported; unsupported collections produce errors.</para>
     /// <para type="description">The Get-DataSchema cmdlet gets database schema information that the database engine provides. If a schema collection name (-CollectionName) is not specified, it returns the information of all available schemas. The provided information varies among database products.</para>
     /// </summary>
     [Cmdlet("Get", "DataSchema")]
@@ -38,6 +39,7 @@ namespace Horker.Data
             var opener = new ConnectionSpecifier(FileOrName, Connection, null, null);
             var connection = opener.Connection;
             var connectionOpen = opener.ConnectionOpened;
+            bool failed = false;
 
             try
             {
@@ -59,14 +61,15 @@ namespace Horker.Data
             }
             catch (Exception ex)
             {
+                failed = true;
                 WriteError(new ErrorRecord(ex, "", ErrorCategory.NotSpecified, null));
             }
             finally
             {
                 if (connectionOpen)
                 {
-                    connection.Close();
-                    connection.Dispose();
+                    if (failed) DuckDbSupport.TryCleanup(connection.Dispose);
+                    else connection.Dispose();
                 }
             }
         }

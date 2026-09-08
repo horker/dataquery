@@ -32,7 +32,7 @@ namespace Horker.Data
         public void Close()
         {
             if (ConnectionOpened && Connection != null)
-                Connection.Close();
+                Connection.Dispose();
             ConnectionOpened = false;
         }
 

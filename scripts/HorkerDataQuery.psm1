@@ -99,6 +99,12 @@ else {
 }
 $script:DefaultDbProviderFactories = @(
     @{
+        Name = 'DuckDB Data Provider'
+        InvariantName = 'DuckDB.NET.Data'
+        Description = 'ADO.NET Data Provider for DuckDB'
+        Assembly = 'DuckDB.NET.Data'; Type = 'DuckDB.NET.Data.DuckDBClientFactory'
+    }
+    @{
         Name = "Odbc Data Provider"
         InvariantName = "System.Data.Odbc"
         Description = ".Net Framework Data Provider for Odbc"
@@ -132,7 +138,7 @@ $script:DefaultDbProviderFactories = @(
 
 foreach ($f in $DefaultDbProviderFactories) {
     if ($PSVersionTable.PSEdition -eq 'Desktop') {
-        if ($f.Assembly -eq 'Npgsql') { continue }
+        if ($f.Assembly -in @('Npgsql', 'DuckDB.NET.Data')) { continue }
         if ($f.Assembly -eq 'System.Data.SQLite') {
             $assembly = [Reflection.Assembly]::LoadFrom((Join-Path $libraryPath 'System.Data.SQLite.dll'))
         }
@@ -149,5 +155,8 @@ foreach ($f in $DefaultDbProviderFactories) {
 
 if ($null -eq (Get-DataConnectionString)['memory']) {
     Register-DataConnectionString 'memory' 'System.Data.SQLite' "Data Source=':memory:'" -ErrorAction Stop
+}
+if ($PSVersionTable.PSEdition -eq 'Core' -and $null -eq (Get-DataConnectionString)['duckdb-memory']) {
+    Register-DataConnectionString 'duckdb-memory' 'DuckDB.NET.Data' 'Data Source=:memory:' -ErrorAction Stop
 }
 Export-ModuleMember -Cmdlet * -Alias *

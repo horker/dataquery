@@ -7,6 +7,15 @@ schema: 2.0.0
 
 # Copy-DataRow
 
+DuckDB is supported as source and/or target on PowerShell 7, including copies
+between SQLite and DuckDB. DuckDB source parameters use `?` / `$1` for positional
+values or `$name` for dictionaries. Generated DuckDB INSERTs quote column names
+with escaped double quotes and use `?` parameters. With `-TargetSql`, use
+`$ColumnName` matching source columns. SQL `@name` is not rewritten for DuckDB.
+If either connection is DuckDB, a positive `-Timeout` fails before SQL execution;
+omit it or use zero. Negative timeouts are invalid. Failed writes roll back the
+batch and caller-owned connections remain open.
+
 ## SYNOPSIS
 
 Copy data from one database to another.

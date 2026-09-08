@@ -11,6 +11,7 @@ namespace Horker.Data
     /// <summary>
     /// <para type="synopsis">Opens a database connection.</para>
     /// <para type="description">The New-DataConnection cmdlet opens a database connection.</para>
+    /// <para type="description">On PowerShell 7, DuckDB.NET.Data is bundled. Use duckdb-memory for an in-memory database, an existing .duckdb path, or explicitly specify ProviderName DuckDB.NET.Data and ConnectionString 'Data Source=analytics.duckdb' to create a file. Registered names take precedence. Keep the connection open to retain an in-memory database. DuckDB is unavailable on Windows PowerShell 5.1.</para>
     /// </summary>
     [Cmdlet("New", "DataConnection", DefaultParameterSetName = "FileOrName")]
     [Alias("Open", "DataConnection")]

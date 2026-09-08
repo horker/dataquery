@@ -13,6 +13,11 @@ namespace Horker.Data.Classes
     {
         public static void SetParameters(DbCommand cmd, object parameters)
         {
+            if (DuckDbSupport.IsDuckDb(cmd.Connection))
+            {
+                DuckDbSupport.SetParameters(cmd, parameters);
+                return;
+            }
             if (parameters == null)
                 return;
 

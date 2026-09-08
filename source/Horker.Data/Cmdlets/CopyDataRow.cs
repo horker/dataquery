@@ -14,6 +14,7 @@ namespace Horker.Data.Cmdlets
 {
     /// <summary>
     /// <para type="synopsis">Copy data from a database to another.</para>
+    /// <para type="description">On PowerShell 7, DuckDB can be the source or target. Generated DuckDB INSERTs use quoted columns and positional parameters. Explicit TargetSql uses $ColumnName parameters. A positive Timeout is rejected before execution if either side is DuckDB; omit it or use zero. Failed writes roll back without closing caller-owned connections.</para>
     /// <para type="description">The Copy-DataRow cmdlet obtains a dataset from a database specified by the -SourceConnection parameter by executing the -SourceSql statement and inserts them to a table of another database spceified bu the -TargetConnection parameter.</para>
     /// <para type="description">When you specify a target table name by the -TargetTable parameter, the cmdlet assumes the specified table contains the same set of columns as the source dataset and inserts them into the corresponding columns.</para>
     /// <para type="description">When you specify a SQL statement for copying by the -TargetSql parameter, the cmdlet executes it for each data row of the source dataset. The SQL statement should contain named parameters corresponding to the columns of the source dataset.</para>
@@ -63,11 +64,14 @@ namespace Horker.Data.Cmdlets
         /// <para type="description">A timeout in seconds.</para>
         /// </summary>
         [Parameter(Position = 6, Mandatory = false)]
+        [ValidateRange(0, int.MaxValue)]
         public int Timeout { get; set; }
 
         protected override void BeginProcessing()
         {
             DbTransaction transaction = null;
+            bool failed = false;
+            bool generatedSql = TargetSql == null;
             try
             {
                 if ((TargetTable == null && TargetSql == null) || (TargetTable != null && TargetSql != null))
@@ -76,6 +80,7 @@ namespace Horker.Data.Cmdlets
                 bool timeoutGiven = MyInvocation.BoundParameters.ContainsKey("Timeout");
 
                 var connection = TargetConnection.Connection;
+                DuckDbSupport.ValidateTimeout(Timeout, SourceConnection.Connection, connection);
 
                 transaction = connection.BeginTransaction();
 
@@ -108,7 +113,13 @@ namespace Horker.Data.Cmdlets
                                 if (TargetSql == null)
                                 {
                                     var factory = Helpers.GetDbProviderFactory(connection);
-                                    using (var builder = factory.CreateCommandBuilder())
+                                    if (DuckDbSupport.IsDuckDb(connection))
+                                    {
+                                        var columns = string.Join(", ", paramNames.Select(DuckDbSupport.QuoteIdentifier));
+                                        var placeholders = string.Join(", ", paramNames.Select(p => "?"));
+                                        TargetSql = $"insert into {TargetTable} ({columns}) values ({placeholders})";
+                                    }
+                                    else using (var builder = factory.CreateCommandBuilder())
                                     {
                                         var columns = string.Join(", ", paramNames.Select(p => builder.QuoteIdentifier(p)));
                                         var paras = "@" + string.Join(", @", paramNames);
@@ -121,8 +132,8 @@ namespace Horker.Data.Cmdlets
                                 for (var i = 0; i < reader.FieldCount; ++i)
                                 {
                                     var param = insertCmd.CreateParameter();
-                                    param.ParameterName = paramNames[i];
-                                    param.Value = reader.GetValue(i);
+                                    param.ParameterName = DuckDbSupport.IsDuckDb(connection) && generatedSql ? "" : paramNames[i];
+                                    param.Value = DuckDbSupport.IsDuckDb(SourceConnection.Connection) ? DuckDbSupport.ReadValue(reader, i) : reader.GetValue(i);
                                     insertCmd.Parameters.Add(param);
                                 }
 
@@ -139,15 +150,25 @@ namespace Horker.Data.Cmdlets
             }
             catch (Exception e)
             {
+                failed = true;
                 if (transaction != null)
-                    transaction.Rollback();
+                    DuckDbSupport.TryCleanup(transaction.Rollback);
 
                 WriteError(new ErrorRecord(e, "", ErrorCategory.NotSpecified, null));
             }
             finally
             {
-                SourceConnection.Close();
-                TargetConnection.Close();
+                if (failed)
+                {
+                    if (transaction != null) DuckDbSupport.TryCleanup(transaction.Dispose);
+                    DuckDbSupport.TryCleanup(() => SourceConnection?.Close());
+                    DuckDbSupport.TryCleanup(() => TargetConnection?.Close());
+                }
+                else
+                {
+                    try { transaction?.Dispose(); }
+                    finally { try { SourceConnection?.Close(); } finally { TargetConnection?.Close(); } }
+                }
             }
         }
     }

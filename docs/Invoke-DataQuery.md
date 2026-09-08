@@ -7,6 +7,16 @@ schema: 2.0.0
 
 # Invoke-DataQuery
 
+For DuckDB (PowerShell 7 only), use `?` or `$1` for scalar/array parameters and
+`$name` for dictionary parameters. Keys accept `name` or `$name`; SQL `@name`
+is not rewritten. Example: `Invoke-DataQuery $c 'select $value as Value' @{ value=42 }`.
+All output modes are supported; an empty DataTable retains its columns. Standard
+CLR types are preserved, BLOBs become independent `byte[]` values, and compound
+types retain provider CLR values. NULL is `$null` in normal output and `DBNull`
+with `-PreserveDbNull` or DataRow/DataTable output. DuckDB affected-row counts
+are always `-1`. Positive `-Timeout` values fail before SQL execution; omitted/zero
+means no limit, and negatives are invalid. Caller-owned connections remain open.
+
 ## SYNOPSIS
 
 Executes a database query.
