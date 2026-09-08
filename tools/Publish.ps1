@@ -1,1 +1,2 @@
-Publish-Module -Path $PSScriptRoot\..\module\release\HorkerDataQuery -NugetApiKey (cat private\NugetApiKey.txt)
+$apiKey = keystore.exe get NUGET_API_KEY
+Publish-Module -Path $PSScriptRoot\..\module\release\HorkerDataQuery -NugetApiKey $apikey -Verbose
